@@ -39,13 +39,12 @@ def load_image(name, colorkey=None):
 
 
 class MainHero(pygame.sprite.Sprite):
-    image = load_image("car1.png")
 
     def __init__(self, *group):
         # НЕОБХОДИМО вызвать конструктор родительского класса Sprite.
         # Это очень важно !!!
         super().__init__(*group)
-        self.image = MainHero.image
+        self.image = load_image("car1.png")
         self.rect = self.image.get_rect()
         self.rect.x = 250
         self.rect.y = 250
@@ -64,14 +63,9 @@ class MainHero(pygame.sprite.Sprite):
 all_sprites = pygame.sprite.Group()
 
 # создадим спрайт
-sprite = pygame.sprite.Sprite()
-# определим его вид
-sprite.image = load_image("car1.png")
-# и размеры
-sprite.rect = sprite.image.get_rect()
-# добавим спрайт в группу
-all_sprites.add(sprite)
+
 MainHero(all_sprites)
+
 while running:
     screen.fill(pygame.Color('black'))
     key = pygame.key.get_pressed()
@@ -82,6 +76,6 @@ while running:
             running = False
     all_sprites.draw(screen)
     pygame.display.flip()
-    clock.tick(25)
+    clock.tick(100)
 
 pygame.quit()
