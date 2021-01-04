@@ -72,6 +72,7 @@ class Floor(pygame.sprite.Sprite):
         self.image = tile_images["empty"]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+        self.mask = pygame.mask.from_surface(self.image)
 
 
 class Asteroid(pygame.sprite.Sprite):
@@ -80,6 +81,7 @@ class Asteroid(pygame.sprite.Sprite):
         self.image = random.choice(tile_images["wall"])
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+        self.mask = pygame.mask.from_surface(self.image)
 
 
 class Camera:
@@ -105,6 +107,8 @@ class Player(pygame.sprite.Sprite):
         self.image = player_image["up"]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 15, tile_height * pos_y + 5)
+        self.mask = pygame.mask.from_surface(self.image)
+
         self.vx = 0
         self.vy = 0
 
@@ -123,6 +127,9 @@ class Player(pygame.sprite.Sprite):
                 self.image = player_image["right"]
                 self.vx, self.vy = 10, 0
         else:
+            self.vx = 0
+            self.vy = 0
+
             if self.vx > 0:
                 self.vx -= DELTA_V
                 self.vx = 0 if self.vx <= 0 else self.vx
@@ -136,9 +143,11 @@ class Player(pygame.sprite.Sprite):
                 self.vy += DELTA_V
                 self.vy = 0 if self.vy >= 0 else self.vy
         if pygame.sprite.spritecollideany(self, aster_group):
-            self.vy = 0
-            self.vx = 0
-
+            a = pygame.sprite.spritecollide(self, aster_group, False)
+            for i in a:
+                if pygame.sprite.collide_mask(self, i):
+                    self.vx = -self.vx
+                    self.vy = -self.vy
         self.rect = self.rect.move(self.vx, self.vy)
 
 
