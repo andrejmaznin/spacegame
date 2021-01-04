@@ -136,8 +136,8 @@ class Player(pygame.sprite.Sprite):
                 self.vy += DELTA_V
                 self.vy = 0 if self.vy >= 0 else self.vy
         if pygame.sprite.spritecollideany(self, aster_group):
-            self.vy = -self.vy
-            self.vx = -self.vx
+            self.vy = 0
+            self.vx = 0
 
         self.rect = self.rect.move(self.vx, self.vy)
 
