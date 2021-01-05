@@ -65,7 +65,7 @@ def generate_map(filename):
                     counts = [abs(j[0] - x1) >= 4 and abs(j[1] - y1) >= 4 for j in planets]
                     print(counts, x1, y1)
 
-                    if abs(x1 - 25) >= 3 and abs(y1 - 25) >= 3 and counts.count(True) == len(counts):
+                    if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4 and counts.count(True) == len(counts):
                         a[y1][x1] = "P"
                         planets.append([x1, y1])
                         break
@@ -139,7 +139,7 @@ class Floor(pygame.sprite.Sprite):
 class Planet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(planet_group, all_sprites)
-        self.image = tile_images["planet"]
+        self.image = random.choice(tile_images["planet"])
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
@@ -255,7 +255,8 @@ star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 
 player_image = load_image("car2.png")
-tile_images = {"sun": load_image("sun.png"), "planet": load_image("planet.png"),
+tile_images = {"sun": load_image("sun.png"),
+               "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
                'empty': load_image('floor.png')}
 generate_map("aaa.txt")
