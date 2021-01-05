@@ -41,23 +41,33 @@ def load_level(filename):
 
 def generate_map(filename):
     try:
+        print(1)
         with open(filename, 'w') as mapFile:
             a = [["." for i in range(50)] for j in range(50)]
             a[25][25] = "S"
             planets = []
             x1, y1 = random.randint(4, 45), random.randint(4, 45)
+            print(1)
             while True:
+                print(x1, y1)
                 if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4:
                     a[y1][x1] = "P"
                     planets.append([x1, y1])
                     break
-            x1, y1 = random.randint(4, 45), random.randint(4, 45)
+                else:
+                    x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
-            for i in range(random.randint(1, 10)):
-                counts = [abs(j[0] - x1) >= 4 and abs(j[1] - y1) >= 4 for j in planets]
+            x1, y1 = random.randint(4, 45), random.randint(4, 45)
+            print(1)
+            for i in range(random.randint(1, 6)):
                 while True:
-                    if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4 and counts.count(True) == len(counts):
+                    print(1)
+                    counts = [abs(j[0] - x1) >= 4 and abs(j[1] - y1) >= 4 for j in planets]
+                    print(counts, x1, y1)
+
+                    if abs(x1 - 25) >= 3 and abs(y1 - 25) >= 3 and counts.count(True) == len(counts):
                         a[y1][x1] = "P"
+                        planets.append([x1, y1])
                         break
                     else:
                         x1, y1 = random.randint(4, 45), random.randint(4, 45)
