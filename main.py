@@ -137,7 +137,7 @@ class Floor(pygame.sprite.Sprite):
 
 
 class Scan(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, frame, columns=4, rows=1):
+    def __init__(self, pos_x, pos_y, frame, columns=8, rows=1):
         super().__init__(scan_group, all_sprites)
         self.frames = []
         self.cur_frame = frame
@@ -225,7 +225,6 @@ class Player(pygame.sprite.Sprite):
                 self.vx = 0
             if keys[pygame.K_UP]:
                 self.cur_frame = 3
-
                 self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
                 self.vx = 0
             if keys[pygame.K_LEFT]:
@@ -239,15 +238,23 @@ class Player(pygame.sprite.Sprite):
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP]:
                 self.cur_frame = 4
                 self.vx, self.vy = V_45, -V_45
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x + tile_height + 5, self.rect.y - tile_height - 5, 4)
             if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN]:
                 self.cur_frame = 5
                 self.vx, self.vy = V_45, V_45
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x + tile_height + 5, self.rect.y + tile_height + 5, 5)
             if keys[pygame.K_LEFT] and keys[pygame.K_UP]:
                 self.cur_frame = 7
                 self.vx, self.vy = -V_45, -V_45
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x - tile_height - 5, self.rect.y - tile_width - 5, 7)
             if keys[pygame.K_LEFT] and keys[pygame.K_DOWN]:
                 self.cur_frame = 6
                 self.vx, self.vy = -V_45, V_45
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
         else:
             if self.vx > 0:
                 self.vx -= DELTA_V
