@@ -136,6 +136,28 @@ class Floor(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
 
+class Scan(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, frame, columns=4, rows=1):
+        super().__init__(scan_group, all_sprites)
+        self.frames = []
+        self.cur_frame = frame
+        self.cut_sheet(tile_images["scan"], columns, rows)
+        self.image = self.frames[self.cur_frame]
+        self.image.convert_alpha()
+        self.rect = self.rect.move(pos_x, pos_y)
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+
 class Planet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(planet_group, all_sprites)
@@ -194,6 +216,8 @@ class Player(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self, keys, *args):
+        global scan_group
+        scan_group = pygame.sprite.Group()
         if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]:
             if keys[pygame.K_DOWN]:
                 self.cur_frame = 0
@@ -237,6 +261,7 @@ class Player(pygame.sprite.Sprite):
             if self.vy < 0:
                 self.vy += DELTA_V
                 self.vy = 0 if self.vy >= 0 else self.vy
+
         if pygame.sprite.spritecollideany(self, star_group):
             a = pygame.sprite.spritecollide(self, star_group, False)
             for i in a:
@@ -245,6 +270,21 @@ class Player(pygame.sprite.Sprite):
                     self.vy = -self.vy
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(self.vx, self.vy)
+        if keys[pygame.K_SPACE]:
+            if self.cur_frame == 0:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x, self.rect.y + tile_height, 2)
+            if self.cur_frame == 1:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x - tile_width, self.rect.y, 3)
+            if self.cur_frame == 2:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x + tile_width, self.rect.y, 1)
+            if self.cur_frame == 3:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x, self.rect.y - tile_height, 0)
+        else:
+            scan_group = pygame.sprite.Group()
 
 
 all_sprites = pygame.sprite.Group()
@@ -253,12 +293,12 @@ player_group = pygame.sprite.Group()
 floor_group = pygame.sprite.Group()
 star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
-
+scan_group = pygame.sprite.Group()
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
-               'empty': load_image('floor.png')}
+               'empty': load_image('floor.png'), "scan": load_image("scan.png")}
 generate_map("aaa.txt")
 
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
@@ -279,6 +319,8 @@ while running:
     star_group.draw(screen)
     planet_group.draw(screen)
     player_group.draw(screen)
+    scan_group.draw(screen)
+
     pygame.display.flip()
     clock.tick(50)
 
