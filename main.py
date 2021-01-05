@@ -23,6 +23,7 @@ dest = []
 x = y = 250
 tile_width = tile_height = 100
 DELTA_V = 1
+V = 20
 
 
 def load_level(filename):
@@ -166,32 +167,29 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]:
             if keys[pygame.K_DOWN]:
                 self.cur_frame = 0
-                self.vx, self.vy = 0, 10
+                self.vx, self.vy = 0, V
             if keys[pygame.K_UP]:
                 self.cur_frame = 3
-                self.vx, self.vy = 0, -10
+                self.vx, self.vy = 0, -V
             if keys[pygame.K_LEFT]:
                 self.cur_frame = 1
-                self.vx, self.vy = -10, 0
+                self.vx, self.vy = -V, 0
             if keys[pygame.K_RIGHT]:
                 self.cur_frame = 2
-                self.vx, self.vy = 10, 0
+                self.vx, self.vy = V, 0
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP]:
                 self.cur_frame = 4
-                self.vx, self.vy = 10, -10
+                self.vx, self.vy = V, -V
             if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN]:
                 self.cur_frame = 5
-                self.vx, self.vy = 10, 10
+                self.vx, self.vy = V, V
             if keys[pygame.K_LEFT] and keys[pygame.K_UP]:
                 self.cur_frame = 7
-                self.vx, self.vy = -10, -10
+                self.vx, self.vy = -V, -V
             if keys[pygame.K_LEFT] and keys[pygame.K_DOWN]:
                 self.cur_frame = 6
-                self.vx, self.vy = -10, 10
+                self.vx, self.vy = -V, V
         else:
-            self.vx = 0
-            self.vy = 0
-
             if self.vx > 0:
                 self.vx -= DELTA_V
                 self.vx = 0 if self.vx <= 0 else self.vx
