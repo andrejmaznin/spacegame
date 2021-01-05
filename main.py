@@ -167,16 +167,21 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]:
             if keys[pygame.K_DOWN]:
                 self.cur_frame = 0
-                self.vx, self.vy = 0, V
+                self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
+                self.vx = 0
             if keys[pygame.K_UP]:
                 self.cur_frame = 3
-                self.vx, self.vy = 0, -V
+
+                self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
+                self.vx = 0
             if keys[pygame.K_LEFT]:
                 self.cur_frame = 1
-                self.vx, self.vy = -V, 0
+                self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
+                self.vy = 0
             if keys[pygame.K_RIGHT]:
                 self.cur_frame = 2
-                self.vx, self.vy = V, 0
+                self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
+                self.vy = 0
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP]:
                 self.cur_frame = 4
                 self.vx, self.vy = V, -V
