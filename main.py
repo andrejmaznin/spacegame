@@ -26,6 +26,7 @@ DELTA_V = 1
 V = 20
 V_45 = 15
 
+
 def load_level(filename):
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
@@ -39,15 +40,34 @@ def load_level(filename):
 
 
 def generate_map(filename):
-    with open(filename, 'w') as mapFile:
-        a = [["." for i in range(50)] for j in range(50)]
-        a[25][25] = "S"
-        for i in range(random.randint(1, 10)):
-            a[random.randint(4, 45)][random.randint(4, 45)] = "P"
-        a[49][24] = "@"
+    try:
+        with open(filename, 'w') as mapFile:
+            a = [["." for i in range(50)] for j in range(50)]
+            a[25][25] = "S"
+            planets = []
+            x1, y1 = random.randint(4, 45), random.randint(4, 45)
+            while True:
+                if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4:
+                    a[y1][x1] = "P"
+                    planets.append([x1, y1])
+                    break
+            x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
-        a = "".join(["".join(i) + "\n" for i in a])
-        mapFile.write(a)
+            for i in range(random.randint(1, 10)):
+                counts = [abs(j[0] - x1) >= 4 and abs(j[1] - y1) >= 4 for j in planets]
+                while True:
+                    if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4 and counts.count(True) == len(counts):
+                        a[y1][x1] = "P"
+                        break
+                    else:
+                        x1, y1 = random.randint(4, 45), random.randint(4, 45)
+
+            a[24][24] = "@"
+
+            a = "".join(["".join(i) + "\n" for i in a])
+            mapFile.write(a)
+    except Exception:
+        print(traceback.format_exc())
 
 
 def generate_level(level):
@@ -148,7 +168,7 @@ class Player(pygame.sprite.Sprite):
         self.cur_frame = 3
         self.cut_sheet(player_image, columns, rows)
         self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(pos_x, pos_y)
+        self.rect = self.rect.move(pos_x * tile_width, pos_y * tile_height)
         self.mask = pygame.mask.from_surface(self.image)
 
         self.vx = 0
@@ -228,9 +248,10 @@ player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"), "planet": load_image("planet.png"),
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
                'empty': load_image('floor.png')}
+generate_map("aaa.txt")
+
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
-
 while running:
     camera.update(player)
     # обновляем положение всех спрайтов
