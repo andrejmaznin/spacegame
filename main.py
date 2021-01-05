@@ -24,7 +24,7 @@ x = y = 250
 tile_width = tile_height = 100
 DELTA_V = 1
 V = 20
-
+V_45 = 15
 
 def load_level(filename):
     # читаем уровень, убирая символы перевода строки
@@ -184,16 +184,16 @@ class Player(pygame.sprite.Sprite):
                 self.vy = 0
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP]:
                 self.cur_frame = 4
-                self.vx, self.vy = V, -V
+                self.vx, self.vy = V_45, -V_45
             if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN]:
                 self.cur_frame = 5
-                self.vx, self.vy = V, V
+                self.vx, self.vy = V_45, V_45
             if keys[pygame.K_LEFT] and keys[pygame.K_UP]:
                 self.cur_frame = 7
-                self.vx, self.vy = -V, -V
+                self.vx, self.vy = -V_45, -V_45
             if keys[pygame.K_LEFT] and keys[pygame.K_DOWN]:
                 self.cur_frame = 6
-                self.vx, self.vy = -V, V
+                self.vx, self.vy = -V_45, V_45
         else:
             if self.vx > 0:
                 self.vx -= DELTA_V
