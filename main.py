@@ -218,39 +218,39 @@ class Player(pygame.sprite.Sprite):
     def update(self, keys, *args):
         global scan_group
         scan_group = pygame.sprite.Group()
-        if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]:
-            if keys[pygame.K_DOWN]:
+        if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[pygame.K_s] or keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_d]:
+            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.cur_frame = 0
                 self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
                 self.vx = 0
-            if keys[pygame.K_UP]:
+            if keys[pygame.K_UP] or keys[pygame.K_w]:
                 self.cur_frame = 3
                 self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
                 self.vx = 0
-            if keys[pygame.K_LEFT]:
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 self.cur_frame = 1
                 self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
                 self.vy = 0
-            if keys[pygame.K_RIGHT]:
+            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 self.cur_frame = 2
                 self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
                 self.vy = 0
-            if keys[pygame.K_RIGHT] and keys[pygame.K_UP]:
+            if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
                 self.cur_frame = 4
                 self.vx, self.vy = V_45, -V_45
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x + tile_height + 5, self.rect.y - tile_height - 5, 4)
-            if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN]:
+            if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
                 self.cur_frame = 5
                 self.vx, self.vy = V_45, V_45
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x + tile_height + 5, self.rect.y + tile_height + 5, 5)
-            if keys[pygame.K_LEFT] and keys[pygame.K_UP]:
+            if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
                 self.cur_frame = 7
                 self.vx, self.vy = -V_45, -V_45
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x - tile_height - 5, self.rect.y - tile_width - 5, 7)
-            if keys[pygame.K_LEFT] and keys[pygame.K_DOWN]:
+            if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
                 self.cur_frame = 6
                 self.vx, self.vy = -V_45, V_45
                 scan_group = pygame.sprite.Group()
