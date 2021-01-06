@@ -1,9 +1,12 @@
 import math
 import pygame
+import pygame.freetype
 import random
 import traceback
 import os
 import sys
+
+pygame.init()
 
 size = 500, 500
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -25,6 +28,7 @@ tile_width = tile_height = 100
 DELTA_V = 1
 V = 20
 V_45 = 15
+STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
 
 
 def load_level(filename):
@@ -170,18 +174,15 @@ class Star(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
 
-class Status(pygame.sprite.Sprite):
-    def __init__(self, pos_x=0, pos_y=0):
-        super().__init__(status_group, status_group)
-        self.image = tile_images["success"]
-        self.rect = self.image.get_rect().move(width // 2 - 98, 200)
-        self.mask = pygame.mask.from_surface(self.image)
+class Status:
+    def __init__(self):
+        self.surface, self.rect = STATUS_FONT.render("", (0, 0, 0))
 
-    def update(self):
-        if scan_group.sprites():
+    def update(self, text):
+        if scan_group.sprites() and text == "success":
             if pygame.sprite.spritecollideany(scan_group.sprites()[0], planet_group) or pygame.sprite.spritecollideany(
                     scan_group.sprites()[0], planet_group):
-                status_group.draw(screen)
+                self.surface, self.rect = STATUS_FONT.render("SUCCESS!", fgcolor=pygame.Color("red"))
                 return True
         return False
 
@@ -319,7 +320,6 @@ floor_group = pygame.sprite.Group()
 star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
-status_group = pygame.sprite.Group()
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
@@ -329,7 +329,8 @@ generate_map("aaa.txt")
 
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
-Status()
+status = Status()
+
 while running:
     camera.update(player)
     # обновляем положение всех спрайтов
@@ -347,8 +348,8 @@ while running:
     planet_group.draw(screen)
     player_group.draw(screen)
     scan_group.draw(screen)
-    if status_group.update():
-        status_group.draw(screen)
+    if status.update("success"):
+        screen.blit(status.surface, (width // 2 - status.surface.get_size()[0] // 2, 200))
     pygame.display.flip()
     clock.tick(50)
 
