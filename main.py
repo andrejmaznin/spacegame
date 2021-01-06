@@ -41,15 +41,12 @@ def load_level(filename):
 
 def generate_map(filename):
     try:
-        print(1)
         with open(filename, 'w') as mapFile:
             a = [["." for i in range(50)] for j in range(50)]
             a[25][25] = "S"
             planets = []
             x1, y1 = random.randint(4, 45), random.randint(4, 45)
-            print(1)
             while True:
-                print(x1, y1)
                 if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4:
                     a[y1][x1] = "P"
                     planets.append([x1, y1])
@@ -58,12 +55,9 @@ def generate_map(filename):
                     x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
             x1, y1 = random.randint(4, 45), random.randint(4, 45)
-            print(1)
             for i in range(random.randint(1, 6)):
                 while True:
-                    print(1)
                     counts = [abs(j[0] - x1) >= 4 and abs(j[1] - y1) >= 4 for j in planets]
-                    print(counts, x1, y1)
 
                     if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4 and counts.count(True) == len(counts):
                         a[y1][x1] = "P"
@@ -176,6 +170,22 @@ class Star(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
 
+class Status(pygame.sprite.Sprite):
+    def __init__(self, pos_x=0, pos_y=0):
+        super().__init__(status_group, status_group)
+        self.image = tile_images["success"]
+        self.rect = self.image.get_rect().move(width // 2 - 98, 200)
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self):
+        if scan_group.sprites():
+            if pygame.sprite.spritecollideany(scan_group.sprites()[0], planet_group) or pygame.sprite.spritecollideany(
+                    scan_group.sprites()[0], planet_group):
+                status_group.draw(screen)
+                return True
+        return False
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -218,7 +228,8 @@ class Player(pygame.sprite.Sprite):
     def update(self, keys, *args):
         global scan_group
         scan_group = pygame.sprite.Group()
-        if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[pygame.K_s] or keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_d]:
+        if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[
+            pygame.K_s] or keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_d]:
             if keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.cur_frame = 0
                 self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
@@ -308,15 +319,17 @@ floor_group = pygame.sprite.Group()
 star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
+status_group = pygame.sprite.Group()
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
-               'empty': load_image('floor.png'), "scan": load_image("scan.png")}
+               'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
 generate_map("aaa.txt")
 
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
+Status()
 while running:
     camera.update(player)
     # обновляем положение всех спрайтов
@@ -334,7 +347,8 @@ while running:
     planet_group.draw(screen)
     player_group.draw(screen)
     scan_group.draw(screen)
-
+    if status_group.update():
+        status_group.draw(screen)
     pygame.display.flip()
     clock.tick(50)
 
