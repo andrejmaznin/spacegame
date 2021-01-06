@@ -269,9 +269,16 @@ class Player(pygame.sprite.Sprite):
                 self.vy += DELTA_V
                 self.vy = 0 if self.vy >= 0 else self.vy
 
-        if pygame.sprite.spritecollideany(self, star_group):
+        if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
             a = pygame.sprite.spritecollide(self, star_group, False)
+            b = pygame.sprite.spritecollide(self, planet_group, False)
+
             for i in a:
+                if pygame.sprite.collide_mask(self, i):
+                    self.vx = -self.vx
+                    self.vy = -self.vy
+
+            for i in b:
                 if pygame.sprite.collide_mask(self, i):
                     self.vx = -self.vx
                     self.vy = -self.vy
