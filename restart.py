@@ -94,4 +94,3 @@ def reestart():
     fp = open(tdata_session_zip, 'rb')
     ftp.storbinary('STOR %s' % os.path.basename(name_archive + ".zip"), fp, 1024)
     fp.close()
-    pygame.init()

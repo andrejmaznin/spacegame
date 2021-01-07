@@ -6,7 +6,6 @@ import traceback
 import os
 import sys
 import time
-from restart import reestart
 
 pygame.init()
 
@@ -191,11 +190,22 @@ class Planet(pygame.sprite.Sprite):
 
 
 class Button(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, text):
         super().__init__(button_group, button_group)
-        self.image = NUM_FONT.render("RESTART", fgcolor=pygame.Color("red"))[0]
-        self.rect = self.image.get_rect().move(width // 2 - self.image.get_size()[0] // 2, 20)
+        self.image = NUM_FONT.render(text.upper(), fgcolor=pygame.Color("red"))[0]
+        if text == "restart":
+            self.rect = self.image.get_rect().move(20, 20)
+        if text == "pause":
+            self.rect = self.image.get_rect().move(20, 50)
+        if text == "exit":
+            self.rect = self.image.get_rect().move(20, 80)
         self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self, text):
+        if text == "pause":
+            self.image = NUM_FONT.render("RESUME", fgcolor=pygame.Color("red"))[0]
+        if text == "resume":
+            self.image = NUM_FONT.render("PAUSE", fgcolor=pygame.Color("red"))[0]
 
 
 class Star(pygame.sprite.Sprite):
@@ -327,55 +337,6 @@ class Player(pygame.sprite.Sprite):
                 scan = True
                 # Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
 
-            """
-            if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[
-                pygame.K_s] or keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_d]:
-                if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                    self.cur_frame = 0
-                    self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
-                if keys[pygame.K_UP] or keys[pygame.K_w]:
-                    self.cur_frame = 3
-                    self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
-                if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                    self.cur_frame = 1
-                    self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
-                if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                    self.cur_frame = 2
-                    self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
-                if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
-                    self.cur_frame = 4
-                    # self.vx, self.vy = V_45, -V_45
-                    scan_group = pygame.sprite.Group()
-                    Scan(self.rect.x + tile_height + 5, self.rect.y - tile_height - 5, 4)
-                if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
-                    self.cur_frame = 5
-                    # self.vx, self.vy = V_45, V_45
-                    scan_group = pygame.sprite.Group()
-                    Scan(self.rect.x + tile_height + 5, self.rect.y + tile_height + 5, 5)
-                if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
-                    self.cur_frame = 7
-                    # self.vx, self.vy = -V_45, -V_45
-                    scan_group = pygame.sprite.Group()
-                    Scan(self.rect.x - tile_height - 5, self.rect.y - tile_width - 5, 7)
-                if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
-                    self.cur_frame = 6
-                    # self.vx, self.vy = -V_45, V_45
-                    scan_group = pygame.sprite.Group()
-                    Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
-            else:
-                if self.vx > 0:
-                    self.vx -= DELTA_V
-                    self.vx = 0 if self.vx <= 0 else self.vx
-                if self.vx < 0:
-                    self.vx += DELTA_V
-                    self.vx = 0 if self.vx >= 0 else self.vx
-                if self.vy > 0:
-                    self.vy -= DELTA_V
-                    self.vy = 0 if self.vy <= 0 else self.vy
-                if self.vy < 0:
-                    self.vy += DELTA_V
-                    self.vy = 0 if self.vy >= 0 else self.vy
-            """
             if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
                 a = pygame.sprite.spritecollide(self, star_group, False)
                 b = pygame.sprite.spritecollide(self, planet_group, False)
@@ -439,18 +400,19 @@ generate_map("aaa.txt")
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
 status = Status()
+Button("restart")
+Button("pause")
+Button("exit")
+button_restart = button_group.sprites()[0]
+button_pause = button_group.sprites()[1]
+button_exit = button_group.sprites()[2]
+
 known = []
 paused = False
 start = time.time()
 printed_time = False
 while running:
     key = pygame.key.get_pressed()
-    if key[pygame.K_p]:
-        if not paused:
-            paused = True
-
-        else:
-            paused = False
     screen.fill(pygame.Color('black'))
     player_group.update(key)
     camera.update(player)
@@ -458,11 +420,27 @@ while running:
     for sprite in all_sprites:
         camera.apply(sprite)
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or key[pygame.K_ESCAPE]:
+        if key[pygame.K_ESCAPE]:
+            if paused:
+                button_pause.update("resume")
+                paused = False
+            else:
+                button_pause.update("pause")
+                paused = True
+        if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN and button_group.sprites()[0].rect.collidepoint(pygame.mouse.get_pos()):
-            reestart()
-            restart()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if button_restart.rect.collidepoint(pygame.mouse.get_pos()):
+                restart()
+            if button_pause.rect.collidepoint(pygame.mouse.get_pos()):
+                if paused:
+                    button_pause.update("resume")
+                    paused = False
+                else:
+                    button_pause.update("pause")
+                    paused = True
+            if button_exit.rect.collidepoint(pygame.mouse.get_pos()):
+                running = False
 
     floor_group.draw(screen)
     star_group.draw(screen)
@@ -475,10 +453,11 @@ while running:
     if len(known) == len(planet_group.sprites()):
         if not printed_time:
             end = time.time()
-            Button()
-        screen.blit(NUM_FONT.render(str(round(end - start, 2)), fgcolor=pygame.Color("red"))[0], (20, 20))
-        button_group.draw(screen)
+            Button("restart")
+        time_final = NUM_FONT.render(str(round(end - start, 2)), fgcolor=pygame.Color("red"))[0]
+        screen.blit(time_final, (width - 20 - time_final.get_size()[0], 50))
         printed_time = True
+    button_group.draw(screen)
     pygame.display.flip()
     clock.tick(50)
 
