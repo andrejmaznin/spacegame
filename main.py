@@ -6,6 +6,7 @@ import traceback
 import os
 import sys
 import time
+from restart import reestart
 
 pygame.init()
 
@@ -460,6 +461,7 @@ while running:
         if event.type == pygame.QUIT or key[pygame.K_ESCAPE]:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and button_group.sprites()[0].rect.collidepoint(pygame.mouse.get_pos()):
+            reestart()
             restart()
 
     floor_group.draw(screen)

