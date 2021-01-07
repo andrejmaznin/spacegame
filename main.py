@@ -62,7 +62,7 @@ def generate_map(filename):
             x1, y1 = random.randint(4, 45), random.randint(4, 45)
             for i in range(random.randint(1, 6)):
                 while True:
-                    counts = [abs(j[0] - x1) >= 4 and abs(j[1] - y1) >= 4 for j in planets]
+                    counts = [abs(j[0] - x1) >= 3 and abs(j[1] - y1) >= 3 for j in planets]
 
                     if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4 and counts.count(True) == len(counts):
                         a[y1][x1] = "P"
