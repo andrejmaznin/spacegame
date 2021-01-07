@@ -94,7 +94,7 @@ def generate_map(filename):
                     else:
                         x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
-            a[20][20] = "@"
+            a[23][23] = "@"
 
             a = "".join(["".join(i) + "\n" for i in a])
             mapFile.write(a)
