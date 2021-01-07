@@ -48,29 +48,29 @@ def load_level(filename):
 def generate_map(filename):
     try:
         with open(filename, 'w') as mapFile:
-            a = [["." for i in range(50)] for j in range(50)]
-            a[25][25] = "S"
+            a = [["." for i in range(80)] for j in range(80)]
+            a[39][39] = "S"
             planets = []
-            x1, y1 = random.randint(4, 45), random.randint(4, 45)
+            x1, y1 = random.randint(4, 75), random.randint(4, 75)
             while True:
-                if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4:
+                if abs(x1 - 39) >= 4 and abs(y1 - 39) >= 4:
                     a[y1][x1] = "P"
                     planets.append([x1, y1])
                     break
                 else:
-                    x1, y1 = random.randint(4, 45), random.randint(4, 45)
+                    x1, y1 = random.randint(4, 75), random.randint(4, 75)
 
-            x1, y1 = random.randint(4, 45), random.randint(4, 45)
-            for i in range(random.randint(1, 6)):
+            x1, y1 = random.randint(4, 75), random.randint(4, 75)
+            for i in range(random.randint(1, 10)):
                 while True:
                     counts = [abs(j[0] - x1) >= 3 and abs(j[1] - y1) >= 3 for j in planets]
 
-                    if abs(x1 - 25) >= 4 and abs(y1 - 25) >= 4 and counts.count(True) == len(counts):
+                    if abs(x1 - 39) >= 4 and abs(y1 - 39) >= 4 and counts.count(True) == len(counts):
                         a[y1][x1] = "P"
                         planets.append([x1, y1])
                         break
                     else:
-                        x1, y1 = random.randint(4, 45), random.randint(4, 45)
+                        x1, y1 = random.randint(4, 75), random.randint(4, 75)
 
             a[24][24] = "@"
 
@@ -401,9 +401,8 @@ tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
                'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
-generate_map("aaa.txt")
 
-player, level_x, level_y = generate_level(load_level('aaa.txt'))
+player, level_x, level_y = generate_level(load_level('sport.txt'))
 camera = Camera()
 status = Status()
 known = []
