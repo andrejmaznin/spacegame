@@ -31,6 +31,7 @@ V = 20
 V_45 = 15
 STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
 NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
+tiles_x, tiles_y = 0, 0
 
 
 def restart():
@@ -108,7 +109,10 @@ def generate_map(filename):
 
 
 def generate_level(level):
+    global tiles_x, tiles_y
     new_player, x, y = None, None, None
+    tiles_y = len(level)
+    tiles_x = len(level[0])
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == 'S':
@@ -140,6 +144,21 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+def minimap():
+    x_f, y_f = floor_group.sprites()[0].rect.x, floor_group.sprites()[0].rect.y
+    x_p, y_p = player.rect.x, player.rect.x
+    mini_width = tile_width * 2 // tiles_x
+    mini_height = tile_height * 2 // tiles_y
+    x, y = int((x_p - x_f)) // tile_width * 4, int((y_p - y_f) // tile_height * 4)
+    pygame.draw.rect(screen, (0, 0, 0),
+                     (0, height - tile_height * 2, tile_width * 2, tile_height * 2))
+    pygame.draw.rect(screen, (255, 255, 255),
+                     (0, height - tile_height * 2 - 2, tile_width * 2, tile_height * 2), 2)
+    if pygame.sprite.spritecollideany(player, floor_group):
+        pygame.draw.rect(screen, (255, 255, 255),
+                         (x, height - tile_height * 2 + y, 10, 10))
 
 
 class Floor(pygame.sprite.Sprite):
@@ -416,6 +435,7 @@ known = []
 paused = False
 start = time.time()
 printed_time = False
+
 while running:
     key = pygame.key.get_pressed()
     screen.fill((5, 5, 5))
@@ -463,6 +483,7 @@ while running:
         screen.blit(time_final, (width - 20 - time_final.get_size()[0], 50))
         printed_time = True
     button_group.draw(screen)
+    minimap()
     pygame.display.flip()
     clock.tick(50)
 
