@@ -237,42 +237,93 @@ class Player(pygame.sprite.Sprite):
     def update(self, keys, *args):
         global scan_group
         scan_group = pygame.sprite.Group()
+        if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_s] or keys[pygame.K_w]:
+            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                self.cur_frame = 0
+                self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
+            if keys[pygame.K_UP] or keys[pygame.K_w]:
+                self.cur_frame = 3
+                self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
+        else:
+            if self.vy > 0:
+                self.vy -= DELTA_V
+                self.vy = 0 if self.vy <= 0 else self.vy
+            if self.vy < 0:
+                self.vy += DELTA_V
+                self.vy = 0 if self.vy >= 0 else self.vy
+
+        if keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[pygame.K_a] or keys[pygame.K_d]:
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                self.cur_frame = 1
+                self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
+            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                self.cur_frame = 2
+                self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
+        else:
+            if self.vx > 0:
+                self.vx -= DELTA_V
+                self.vx = 0 if self.vx <= 0 else self.vx
+            if self.vx < 0:
+                self.vx += DELTA_V
+                self.vx = 0 if self.vx >= 0 else self.vx
+        if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
+            self.cur_frame = 4
+            # self.vx, self.vy = V_45, -V_45
+            scan_group = pygame.sprite.Group()
+            scan = True
+            # Scan(self.rect.x + tile_height - self.vx, self.rect.y - tile_height + self.vy, 4)
+        if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
+            self.cur_frame = 5
+            # self.vx, self.vy = V_45, V_45
+            scan_group = pygame.sprite.Group()
+            scan = True
+            # Scan(self.rect.x + tile_height - self.vx, self.rect.y + tile_height - self.vy, 5)
+        if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
+            self.cur_frame = 7
+            # self.vx, self.vy = -V_45, -V_45
+            scan_group = pygame.sprite.Group()
+            scan = True
+            # Scan(self.rect.x - tile_height + self.vx, self.rect.y - tile_width + self.vy, 7)
+        if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
+            self.cur_frame = 6
+            # self.vx, self.vy = -V_45, V_45
+            scan_group = pygame.sprite.Group()
+            scan = True
+            # Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
+
+        """
         if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[
             pygame.K_s] or keys[pygame.K_w] or keys[pygame.K_a] or keys[pygame.K_d]:
             if keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 self.cur_frame = 0
                 self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
-                self.vx = 0
             if keys[pygame.K_UP] or keys[pygame.K_w]:
                 self.cur_frame = 3
                 self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
-                self.vx = 0
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 self.cur_frame = 1
                 self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
-                self.vy = 0
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 self.cur_frame = 2
                 self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
-                self.vy = 0
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
                 self.cur_frame = 4
-                self.vx, self.vy = V_45, -V_45
+                # self.vx, self.vy = V_45, -V_45
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x + tile_height + 5, self.rect.y - tile_height - 5, 4)
             if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
                 self.cur_frame = 5
-                self.vx, self.vy = V_45, V_45
+                # self.vx, self.vy = V_45, V_45
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x + tile_height + 5, self.rect.y + tile_height + 5, 5)
             if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
                 self.cur_frame = 7
-                self.vx, self.vy = -V_45, -V_45
+                # self.vx, self.vy = -V_45, -V_45
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x - tile_height - 5, self.rect.y - tile_width - 5, 7)
             if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
                 self.cur_frame = 6
-                self.vx, self.vy = -V_45, V_45
+                # self.vx, self.vy = -V_45, V_45
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
         else:
@@ -288,7 +339,7 @@ class Player(pygame.sprite.Sprite):
             if self.vy < 0:
                 self.vy += DELTA_V
                 self.vy = 0 if self.vy >= 0 else self.vy
-
+        """
         if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
             a = pygame.sprite.spritecollide(self, star_group, False)
             b = pygame.sprite.spritecollide(self, planet_group, False)
@@ -303,6 +354,7 @@ class Player(pygame.sprite.Sprite):
                     self.vx = -self.vx
                     self.vy = -self.vy
         self.image = self.frames[self.cur_frame]
+
         self.rect = self.rect.move(self.vx, self.vy)
         if keys[pygame.K_SPACE]:
             if self.cur_frame == 0:
@@ -317,6 +369,18 @@ class Player(pygame.sprite.Sprite):
             if self.cur_frame == 3:
                 scan_group = pygame.sprite.Group()
                 Scan(self.rect.x, self.rect.y - tile_height, 0)
+            if self.cur_frame == 4:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x + tile_width - 7, self.rect.y - tile_height + 7, 4)
+            if self.cur_frame == 5:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x + tile_width - 7, self.rect.y + tile_height - 7, 5)
+            if self.cur_frame == 6:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x - tile_width + 7, self.rect.y + tile_height - 7, 6)
+            if self.cur_frame == 7:
+                scan_group = pygame.sprite.Group()
+                Scan(self.rect.x - tile_width + 7, self.rect.y - tile_height + 7, 7)
         else:
             scan_group = pygame.sprite.Group()
 
