@@ -29,6 +29,7 @@ DELTA_V = 1
 V = 20
 V_45 = 15
 STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
+NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
 
 
 def load_level(filename):
@@ -177,12 +178,20 @@ class Star(pygame.sprite.Sprite):
 class Status:
     def __init__(self):
         self.surface, self.rect = STATUS_FONT.render("", (0, 0, 0))
+        self.to_blit = {
+            "success": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
+            "num_known": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)]}
 
     def update(self, text):
         if scan_group.sprites() and text == "success":
-            if pygame.sprite.spritecollideany(scan_group.sprites()[0], planet_group) or pygame.sprite.spritecollideany(
-                    scan_group.sprites()[0], planet_group):
-                self.surface, self.rect = STATUS_FONT.render("SUCCESS!", fgcolor=pygame.Color("red"))
+            if pygame.sprite.spritecollideany(scan_group.sprites()[0], planet_group):
+                a = pygame.sprite.spritecollide(scan_group.sprites()[0], planet_group, False)
+                if a[0] not in known:
+                    known.append(a[0])
+                self.to_blit["success"] = [STATUS_FONT.render("SUCCESS", fgcolor=pygame.Color("red"))[0],
+                                           (width // 2 - self.to_blit["success"][0].get_size()[0] // 2, 200)]
+                self.to_blit["num_known"] = [NUM_FONT.render(str(len(known)), fgcolor=pygame.Color("red"))[0],
+                                             (width - 20 - self.to_blit["num_known"][0].get_size()[0], 20)]
                 return True
         return False
 
@@ -213,7 +222,6 @@ class Player(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(pos_x * tile_width, pos_y * tile_height)
         self.mask = pygame.mask.from_surface(self.image)
-
         self.vx = 0
         self.vy = 0
 
@@ -330,6 +338,7 @@ generate_map("aaa.txt")
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
 status = Status()
+known = []
 
 while running:
     camera.update(player)
@@ -349,7 +358,8 @@ while running:
     player_group.draw(screen)
     scan_group.draw(screen)
     if status.update("success"):
-        screen.blit(status.surface, (width // 2 - status.surface.get_size()[0] // 2, 200))
+        screen.blit(*status.to_blit["success"])
+    screen.blit(*status.to_blit["num_known"])
     pygame.display.flip()
     clock.tick(50)
 
