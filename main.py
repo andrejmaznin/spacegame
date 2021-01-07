@@ -35,7 +35,7 @@ NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
 
 def restart():
     global player, level_x, level_y, camera, status, known, paused, start, printed_time, all_sprites, tiles_group, \
-        planet_group, player_group, star_group, floor_group, scan_group, button_group
+        planet_group, player_group, star_group, floor_group, scan_group, button_group, button_exit, button_restart, button_pause
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
@@ -44,7 +44,12 @@ def restart():
     planet_group = pygame.sprite.Group()
     scan_group = pygame.sprite.Group()
     button_group = pygame.sprite.Group()
-
+    Button("restart")
+    Button("pause")
+    Button("exit")
+    button_restart = button_group.sprites()[0]
+    button_pause = button_group.sprites()[1]
+    button_exit = button_group.sprites()[2]
     generate_map("aaa.txt")
     player, level_x, level_y = generate_level(load_level('aaa.txt'))
     camera = Camera()
