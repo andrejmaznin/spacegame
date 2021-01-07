@@ -33,6 +33,28 @@ STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
 NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
 
 
+def restart():
+    global player, level_x, level_y, camera, status, known, paused, start, printed_time, all_sprites, tiles_group, \
+        planet_group, player_group, star_group, floor_group, scan_group, button_group
+    all_sprites = pygame.sprite.Group()
+    tiles_group = pygame.sprite.Group()
+    player_group = pygame.sprite.Group()
+    floor_group = pygame.sprite.Group()
+    star_group = pygame.sprite.Group()
+    planet_group = pygame.sprite.Group()
+    scan_group = pygame.sprite.Group()
+    button_group = pygame.sprite.Group()
+
+    generate_map("aaa.txt")
+    player, level_x, level_y = generate_level(load_level('aaa.txt'))
+    camera = Camera()
+    status = Status()
+    known = []
+    paused = False
+    start = time.time()
+    printed_time = False
+
+
 def load_level(filename):
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
@@ -48,31 +70,31 @@ def load_level(filename):
 def generate_map(filename):
     try:
         with open(filename, 'w') as mapFile:
-            a = [["." for i in range(80)] for j in range(80)]
-            a[39][39] = "S"
+            a = [["." for i in range(50)] for j in range(50)]
+            a[24][24] = "S"
             planets = []
-            x1, y1 = random.randint(4, 75), random.randint(4, 75)
+            x1, y1 = random.randint(4, 45), random.randint(4, 45)
             while True:
-                if abs(x1 - 39) >= 4 and abs(y1 - 39) >= 4:
+                if abs(x1 - 24) >= 4 and abs(y1 - 24) >= 4:
                     a[y1][x1] = "P"
                     planets.append([x1, y1])
                     break
                 else:
-                    x1, y1 = random.randint(4, 75), random.randint(4, 75)
+                    x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
-            x1, y1 = random.randint(4, 75), random.randint(4, 75)
-            for i in range(random.randint(1, 10)):
+            x1, y1 = random.randint(4, 45), random.randint(4, 45)
+            for i in range(random.randint(1, 6)):
                 while True:
                     counts = [abs(j[0] - x1) >= 3 and abs(j[1] - y1) >= 3 for j in planets]
 
-                    if abs(x1 - 39) >= 4 and abs(y1 - 39) >= 4 and counts.count(True) == len(counts):
+                    if abs(x1 - 24) >= 4 and abs(y1 - 24) >= 4 and counts.count(True) == len(counts):
                         a[y1][x1] = "P"
                         planets.append([x1, y1])
                         break
                     else:
-                        x1, y1 = random.randint(4, 75), random.randint(4, 75)
+                        x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
-            a[24][24] = "@"
+            a[20][20] = "@"
 
             a = "".join(["".join(i) + "\n" for i in a])
             mapFile.write(a)
@@ -167,6 +189,14 @@ class Planet(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
 
+class Button(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(button_group, button_group)
+        self.image = NUM_FONT.render("RESTART", fgcolor=pygame.Color("red"))[0]
+        self.rect = self.image.get_rect().move(width // 2 - self.image.get_size()[0] // 2, 20)
+        self.mask = pygame.mask.from_surface(self.image)
+
+
 class Star(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(star_group, all_sprites)
@@ -181,7 +211,8 @@ class Status:
         self.surface, self.rect = STATUS_FONT.render("", (0, 0, 0))
         self.to_blit = {
             "success": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
-            "num_known": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)]}
+            "num_known": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
+            "restart": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)]}
 
     def update(self, text):
         if scan_group.sprites() and text == "success":
@@ -396,13 +427,15 @@ floor_group = pygame.sprite.Group()
 star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
+button_group = pygame.sprite.Group()
+
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
                'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
-
-player, level_x, level_y = generate_level(load_level('sport.txt'))
+generate_map("aaa.txt")
+player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
 status = Status()
 known = []
@@ -426,6 +459,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or key[pygame.K_ESCAPE]:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN and button_group.sprites()[0].rect.collidepoint(pygame.mouse.get_pos()):
+            restart()
 
     floor_group.draw(screen)
     star_group.draw(screen)
@@ -438,7 +473,9 @@ while running:
     if len(known) == len(planet_group.sprites()):
         if not printed_time:
             end = time.time()
+            Button()
         screen.blit(NUM_FONT.render(str(round(end - start, 2)), fgcolor=pygame.Color("red"))[0], (20, 20))
+        button_group.draw(screen)
         printed_time = True
     pygame.display.flip()
     clock.tick(50)
