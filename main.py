@@ -272,8 +272,10 @@ class Camera:
     # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
         if not paused:
-            obj.rect.x += self.dx
-            obj.rect.y += self.dy
+            if bottom_left.rect.y - player.rect.y >= height // 2 <= player.rect.y - top_right.rect.y:
+                obj.rect.y += self.dy
+            if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
+                obj.rect.x += self.dx
 
     # позиционировать камеру на объекте target
     def update(self, target):
@@ -430,13 +432,18 @@ Button("exit")
 button_restart = button_group.sprites()[0]
 button_pause = button_group.sprites()[1]
 button_exit = button_group.sprites()[2]
-
+bottom_left = floor_group.sprites()[-1]
+top_right = floor_group.sprites()[0]
 known = []
 paused = False
 start = time.time()
 printed_time = False
-
+t = 0
+t1 = 0
 while running:
+    if printed_time:
+        t = 0
+        t1 = 0
     key = pygame.key.get_pressed()
     screen.fill((5, 5, 5))
     player_group.update(key)
@@ -448,9 +455,11 @@ while running:
         if key[pygame.K_ESCAPE]:
             if paused:
                 button_pause.update("resume")
+                t1 = time.time()
                 paused = False
             else:
                 button_pause.update("pause")
+                t = time.time()
                 paused = True
         if event.type == pygame.QUIT:
             running = False
@@ -460,9 +469,12 @@ while running:
             if button_pause.rect.collidepoint(pygame.mouse.get_pos()):
                 if paused:
                     button_pause.update("resume")
+                    t1 += time.time()
+
                     paused = False
                 else:
                     button_pause.update("pause")
+                    t += time.time()
                     paused = True
             if button_exit.rect.collidepoint(pygame.mouse.get_pos()):
                 running = False
@@ -479,7 +491,7 @@ while running:
         if not printed_time:
             end = time.time()
             Button("restart")
-        time_final = NUM_FONT.render(str(round(end - start, 2)), fgcolor=pygame.Color("red"))[0]
+        time_final = NUM_FONT.render(str(round(end - start + (t1 - t), 2)), fgcolor=pygame.Color("red"))[0]
         screen.blit(time_final, (width - 20 - time_final.get_size()[0], 50))
         printed_time = True
     button_group.draw(screen)
