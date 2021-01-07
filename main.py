@@ -418,7 +418,7 @@ start = time.time()
 printed_time = False
 while running:
     key = pygame.key.get_pressed()
-    screen.fill(pygame.Color('black'))
+    screen.fill((5, 5, 5))
     player_group.update(key)
     camera.update(player)
     # обновляем положение всех спрайтов
