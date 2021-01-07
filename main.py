@@ -6,6 +6,7 @@ import traceback
 import os
 import sys
 import time
+
 pygame.init()
 
 size = 500, 500
@@ -407,6 +408,8 @@ camera = Camera()
 status = Status()
 known = []
 paused = False
+start = time.time()
+printed_time = False
 while running:
     key = pygame.key.get_pressed()
     if key[pygame.K_p]:
@@ -424,6 +427,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or key[pygame.K_ESCAPE]:
             running = False
+
     floor_group.draw(screen)
     star_group.draw(screen)
     planet_group.draw(screen)
@@ -432,6 +436,11 @@ while running:
     if status.update("success"):
         screen.blit(*status.to_blit["success"])
     screen.blit(*status.to_blit["num_known"])
+    if len(known) == len(planet_group.sprites()):
+        if not printed_time:
+            end = time.time()
+        screen.blit(NUM_FONT.render(str(round(end - start, 2)), fgcolor=pygame.Color("red"))[0], (20, 20))
+        printed_time = True
     pygame.display.flip()
     clock.tick(50)
 
