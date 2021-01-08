@@ -105,7 +105,7 @@ def generate_map(filename):
                     else:
                         x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
-            a[23][23] = "@"
+            a[20][20] = "@"
 
             a = "".join(["".join(i) + "\n" for i in a])
             mapFile.write(a)
@@ -216,6 +216,10 @@ class Planet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
+        Gravity(tile_width * pos_x, tile_height * pos_y, self.image.get_size()[0])
+
+    def update(self):
+        pass
 
 
 class Button(pygame.sprite.Sprite):
@@ -244,7 +248,7 @@ class Star(pygame.sprite.Sprite):
         super().__init__(star_group, all_sprites)
         self.image = tile_images["sun"]
         self.rect = self.image.get_rect().move(
-            tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x - self.image.get_size()[0] // 2, tile_height * pos_y - self.image.get_size()[1] // 2)
         self.mask = pygame.mask.from_surface(self.image)
 
 
@@ -337,12 +341,13 @@ class Player(pygame.sprite.Sprite):
                     self.cur_frame = 2
                     self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
             else:
-                if self.vx > 0:
-                    self.vx -= DELTA_V
-                    self.vx = 0 if self.vx <= 0 else self.vx
-                if self.vx < 0:
-                    self.vx += DELTA_V
-                    self.vx = 0 if self.vx >= 0 else self.vx
+                if not captured:
+                    if self.vx > 0:
+                        self.vx -= DELTA_V
+                        self.vx = 0 if self.vx <= 0 else self.vx
+                    if self.vx < 0:
+                        self.vx += DELTA_V
+                        self.vx = 0 if self.vx >= 0 else self.vx
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
                 self.cur_frame = 4
                 # self.vx, self.vy = V_45, -V_45
@@ -383,7 +388,7 @@ class Player(pygame.sprite.Sprite):
                         self.vy = -self.vy
             self.image = self.frames[self.cur_frame]
 
-            self.rect = self.rect.move(self.vx, self.vy)
+            self.rect = self.rect.move(int(self.vx), self.vy)
             if keys[pygame.K_SPACE]:
                 if self.cur_frame == 0:
                     scan_group = pygame.sprite.Group()
@@ -413,7 +418,35 @@ class Player(pygame.sprite.Sprite):
                 scan_group = pygame.sprite.Group()
 
 
+class Gravity(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, radius):
+        super().__init__(gravity_group, all_sprites)
+        self.radius = radius
+        self.image = pygame.Surface((radius + 2 * tile_width, radius + 2 * tile_height))
+        self.center = (tile_width + radius // 2, tile_height + radius // 2)
+        pygame.draw.circle(self.image, (0, 0, 0), self.center,
+                           radius + tile_width)
+        self.rect = self.image.get_rect().move(pos_x - tile_width, pos_y - tile_height)
+        self.mask = pygame.mask.from_surface(self.image)
+"""
+    def update(self):
+        global captured
+        self.center = (self.rect.x + self.radius // 2 + tile_width, tile_height + self.radius // 2 + self.rect.y)
+        if pygame.sprite.spritecollideany(player, gravity_group):
+            captured = True
+            if player.rect.x - self.center[0] <= 0:
+                print(12)
+                player.vx += 0.2
+            if player.rect.x - self.center[0] > 0:
+                player.vx -= 0.2
+            if player.rect:
+                pass
+        else:
+            captured = False
+""" 
+
 class Message:
+
     def __init__(self, filename):
         with open(filename) as textFile:
             self.surface = pygame.Surface((800, 400))
@@ -432,11 +465,9 @@ class Message:
 
     def update(self, pos):
         global show_text
-        print(1)
         if self.but_x + 400 <= pos[0] <= self.but_x + self.button.get_size()[0] + 400 and self.but_y + 400 <= pos[
             1] <= self.but_y + 400 + \
                 self.button.get_size()[1]:
-            print(2)
             show_text = False
 
 
@@ -448,7 +479,7 @@ star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
 button_group = pygame.sprite.Group()
-
+gravity_group = pygame.sprite.Group()
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
@@ -477,9 +508,13 @@ t1 = 0
 show_text = False
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
-pygame.mixer.music.play()
-
+# pygame.mixer.music.play()
+captured = False
+seconds = 0
 while running:
+    if seconds >= 120:
+        pygame.mixer.music.queue("moon.mp3")
+        seconds = 0
     if printed_time:
         t = 0
         t1 = 0
@@ -522,7 +557,6 @@ while running:
                     pygame.mixer.music.pause()
             if button_exit.rect.collidepoint(*pos):
                 running = False
-
     floor_group.draw(screen)
     star_group.draw(screen)
     planet_group.draw(screen)
@@ -546,6 +580,7 @@ while running:
     pygame.display.flip()
     if key[pygame.K_SPACE] and not paused:
         scan_channel = scan_sound.play(0)
+    seconds += time.time()
     clock.tick(50)
 
 pygame.quit()
