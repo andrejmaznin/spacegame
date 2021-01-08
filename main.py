@@ -6,7 +6,7 @@ import traceback
 import os
 import sys
 import time
-
+import simpleaudio
 pygame.init()
 
 size = 500, 500
@@ -271,12 +271,10 @@ class Status:
 
 
 class Camera:
-    # ������� ��������� ����� ������
     def __init__(self):
         self.dx = width // 2
         self.dy = height // 2
 
-    # �������� ������ obj �� �������� ������
     def apply(self, obj):
         if not paused:
             if bottom_left.rect.y - player.rect.y >= height // 2 <= player.rect.y - top_right.rect.y:
@@ -284,7 +282,6 @@ class Camera:
             if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
                 obj.rect.x += self.dx
 
-    # ��������������� ������ �� ������� target
     def update(self, target):
         if not paused:
             self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
@@ -313,7 +310,7 @@ class Player(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self, keys, *args):
-        global scan_group
+        global scan_group, scan_sound
         if not paused:
             scan_group = pygame.sprite.Group()
             if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_s] or keys[pygame.K_w]:
@@ -477,8 +474,11 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
+scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
+
+
 while running:
     if printed_time:
         t = 0
@@ -544,6 +544,8 @@ while running:
     button_group.draw(screen)
     minimap()
     pygame.display.flip()
+    if key[pygame.K_SPACE]:
+        scan_channel = scan_sound.play(0)
     clock.tick(50)
 
 pygame.quit()
