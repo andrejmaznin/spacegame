@@ -36,7 +36,8 @@ tiles_x, tiles_y = 0, 0
 
 def restart():
     global player, level_x, level_y, camera, status, known, paused, start, printed_time, all_sprites, tiles_group, \
-        planet_group, player_group, star_group, floor_group, scan_group, button_group, button_exit, button_restart, button_pause
+        planet_group, player_group, star_group, floor_group, scan_group, button_group, button_exit, button_restart, \
+        button_pause, top_right, bottom_left
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
@@ -59,6 +60,8 @@ def restart():
     paused = False
     start = time.time()
     printed_time = False
+    bottom_left = floor_group.sprites()[-1]
+    top_right = floor_group.sprites()[0]
 
 
 def load_level(filename):
