@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import simpleaudio
+
 pygame.init()
 
 size = 500, 500
@@ -478,7 +479,6 @@ scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
 
-
 while running:
     if printed_time:
         t = 0
@@ -544,7 +544,7 @@ while running:
     button_group.draw(screen)
     minimap()
     pygame.display.flip()
-    if key[pygame.K_SPACE]:
+    if key[pygame.K_SPACE] and not paused:
         scan_channel = scan_sound.play(0)
     clock.tick(50)
 
