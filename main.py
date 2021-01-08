@@ -477,6 +477,8 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
+pygame.mixer.music.load('moon.mp3')
+pygame.mixer.music.play()
 while running:
     if printed_time:
         t = 0
@@ -493,10 +495,12 @@ while running:
                 button_pause.update("resume")
                 t1 = time.time()
                 paused = False
+                pygame.mixer.music.unpause()
             else:
                 button_pause.update("pause")
                 t = time.time()
                 paused = True
+                pygame.mixer.music.pause()
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -508,12 +512,14 @@ while running:
                 if paused:
                     button_pause.update("resume")
                     t1 += time.time()
-
+                    pygame.mixer.music.unpause()
                     paused = False
+                    pygame.mixer.music.unpause()
                 else:
                     button_pause.update("pause")
                     t += time.time()
                     paused = True
+                    pygame.mixer.music.pause()
             if button_exit.rect.collidepoint(*pos):
                 running = False
 
@@ -524,7 +530,7 @@ while running:
     scan_group.draw(screen)
     if status.update("success"):
         screen.blit(*status.to_blit["success"])
-        show_text = True
+        show_text = False
     if show_text:
         screen.blit(messages[0].surface, (400, 400))
     screen.blit(*status.to_blit["num_known"])
