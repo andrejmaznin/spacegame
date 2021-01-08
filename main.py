@@ -31,6 +31,7 @@ V = 20
 V_45 = 15
 STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
 NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
+TEXT_FONT = pygame.freetype.Font("Tomba2Full.ttf", 36)
 tiles_x, tiles_y = 0, 0
 
 
@@ -65,14 +66,14 @@ def restart():
 
 
 def load_level(filename):
-    # читаем уровень, убирая символы перевода строки
+    # ������ �������, ������ ������� �������� ������
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
 
-    # и подсчитываем максимальную длину
+    # � ������������ ������������ �����
     max_width = max(map(len, level_map))
 
-    # дополняем каждую строку пустыми клетками ('.')
+    # ��������� ������ ������ ������� �������� ('.')
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
@@ -129,14 +130,14 @@ def generate_level(level):
             elif level[y][x] == '@':
                 Floor(x, y)
                 new_player = Player(x, y)
-    # вернем игрока, а также размер поля в клетках
+    # ������ ������, � ����� ������ ���� � �������
     return new_player, x, y
 
 
 def load_image(name, colorkey=None):
-    # если файл не существует, то выходим
+    # ���� ���� �� ����������, �� �������
     if not os.path.isfile(name):
-        print(f"Файл с изображением '{name}' не найден")
+        print(f"���� � ������������ '{name}' �� ������")
         sys.exit()
     image = pygame.image.load(name)
     if colorkey is not None:
@@ -217,9 +218,11 @@ class Planet(pygame.sprite.Sprite):
 
 
 class Button(pygame.sprite.Sprite):
-    def __init__(self, text):
+    def __init__(self, text, position=(0, 0)):
         super().__init__(button_group, button_group)
         self.image = NUM_FONT.render(text.upper(), fgcolor=pygame.Color("red"))[0]
+        if text == "close":
+            self.image = NUM_FONT.render("X", fgcolor=pygame.Color("red"))[0]
         if text == "restart":
             self.rect = self.image.get_rect().move(20, 20)
         if text == "pause":
@@ -256,6 +259,7 @@ class Status:
         if scan_group.sprites() and text == "success":
             if pygame.sprite.spritecollideany(scan_group.sprites()[0], planet_group):
                 a = pygame.sprite.spritecollide(scan_group.sprites()[0], planet_group, False)
+
                 if a[0] not in known:
                     known.append(a[0])
                 self.to_blit["success"] = [STATUS_FONT.render("SUCCESS", fgcolor=pygame.Color("red"))[0],
@@ -267,12 +271,12 @@ class Status:
 
 
 class Camera:
-    # зададим начальный сдвиг камеры
+    # ������� ��������� ����� ������
     def __init__(self):
         self.dx = width // 2
         self.dy = height // 2
 
-    # сдвинуть объект obj на смещение камеры
+    # �������� ������ obj �� �������� ������
     def apply(self, obj):
         if not paused:
             if bottom_left.rect.y - player.rect.y >= height // 2 <= player.rect.y - top_right.rect.y:
@@ -280,7 +284,7 @@ class Camera:
             if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
                 obj.rect.x += self.dx
 
-    # позиционировать камеру на объекте target
+    # ��������������� ������ �� ������� target
     def update(self, target):
         if not paused:
             self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
@@ -411,6 +415,33 @@ class Player(pygame.sprite.Sprite):
                 scan_group = pygame.sprite.Group()
 
 
+class Message:
+    def __init__(self, filename):
+        with open(filename) as textFile:
+            self.surface = pygame.Surface((800, 400))
+            text = [i.strip() for i in textFile]
+            pygame.draw.rect(self.surface, (255, 255, 255), (0, 0, 800, 400), 4)
+            self.text_surfaces = [TEXT_FONT.render(i, (255, 255, 255)) for i in text]
+            x, y = 40, 20
+            self.surface.blit(self.text_surfaces[0][0], (x, y))
+            y += 30
+            for i in self.text_surfaces[1:]:
+                self.surface.blit(i[0], (x, y))
+                y += 30
+            self.button, self.button_rect = TEXT_FONT.render("X", (255, 0, 0))
+            self.but_x, self.but_y = 800 - 10 - self.button.get_size()[0], 10
+            self.surface.blit(self.button, (800 - 10 - self.button.get_size()[0], 10))
+
+    def update(self, pos):
+        global show_text
+        print(1)
+        if self.but_x + 400 <= pos[0] <= self.but_x + self.button.get_size()[0] + 400 and self.but_y + 400 <= pos[
+            1] <= self.but_y + 400 + \
+                self.button.get_size()[1]:
+            print(2)
+            show_text = False
+
+
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
@@ -437,12 +468,15 @@ button_pause = button_group.sprites()[1]
 button_exit = button_group.sprites()[2]
 bottom_left = floor_group.sprites()[-1]
 top_right = floor_group.sprites()[0]
+messages = []
+messages.append(Message("text.txt"))
 known = []
 paused = False
 start = time.time()
 printed_time = False
 t = 0
 t1 = 0
+show_text = False
 while running:
     if printed_time:
         t = 0
@@ -451,7 +485,6 @@ while running:
     screen.fill((5, 5, 5))
     player_group.update(key)
     camera.update(player)
-    # обновляем положение всех спрайтов
     for sprite in all_sprites:
         camera.apply(sprite)
     for event in pygame.event.get():
@@ -467,9 +500,11 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if button_restart.rect.collidepoint(pygame.mouse.get_pos()):
+            pos = pygame.mouse.get_pos()
+            messages[0].update(pos)
+            if button_restart.rect.collidepoint(*pos):
                 restart()
-            if button_pause.rect.collidepoint(pygame.mouse.get_pos()):
+            if button_pause.rect.collidepoint(*pos):
                 if paused:
                     button_pause.update("resume")
                     t1 += time.time()
@@ -479,7 +514,7 @@ while running:
                     button_pause.update("pause")
                     t += time.time()
                     paused = True
-            if button_exit.rect.collidepoint(pygame.mouse.get_pos()):
+            if button_exit.rect.collidepoint(*pos):
                 running = False
 
     floor_group.draw(screen)
@@ -489,6 +524,9 @@ while running:
     scan_group.draw(screen)
     if status.update("success"):
         screen.blit(*status.to_blit["success"])
+        show_text = True
+    if show_text:
+        screen.blit(messages[0].surface, (400, 400))
     screen.blit(*status.to_blit["num_known"])
     if len(known) == len(planet_group.sprites()):
         if not printed_time:
