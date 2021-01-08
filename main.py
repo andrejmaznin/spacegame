@@ -428,6 +428,8 @@ class Gravity(pygame.sprite.Sprite):
                            radius + tile_width)
         self.rect = self.image.get_rect().move(pos_x - tile_width, pos_y - tile_height)
         self.mask = pygame.mask.from_surface(self.image)
+
+
 """
     def update(self):
         global captured
@@ -443,7 +445,8 @@ class Gravity(pygame.sprite.Sprite):
                 pass
         else:
             captured = False
-""" 
+"""
+
 
 class Message:
 
@@ -564,7 +567,7 @@ while running:
     scan_group.draw(screen)
     if status.update("success"):
         screen.blit(*status.to_blit["success"])
-        show_text = False
+        show_text = True
     if show_text:
         screen.blit(messages[0].surface, (400, 400))
     screen.blit(*status.to_blit["num_known"])
