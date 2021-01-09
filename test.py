@@ -6,6 +6,7 @@ import traceback
 import os
 import sys
 import time
+
 # import simpleaudio
 
 pygame.init()
@@ -221,9 +222,9 @@ class Planet(pygame.sprite.Sprite):
 class Button(pygame.sprite.Sprite):
     def __init__(self, text, position=(0, 0)):
         super().__init__(button_group, button_group)
-        self.image = NUM_FONT.render(text.upper(), fgcolor=pygame.Color("red"))[0]
-        if text == "close":
-            self.image = NUM_FONT.render("X", fgcolor=pygame.Color("red"))[0]
+        self.color = pygame.Color("red")
+        self.image = NUM_FONT.render(text.upper(), fgcolor=self.color)[0]
+        self.text = text
         if text == "restart":
             self.rect = self.image.get_rect().move(20, 20)
         if text == "pause":
@@ -232,7 +233,14 @@ class Button(pygame.sprite.Sprite):
             self.rect = self.image.get_rect().move(20, 80)
         self.mask = pygame.mask.from_surface(self.image)
 
-    def update(self, text):
+    def update(self, text=""):
+        pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(*pos):
+            self.color = pygame.Color("blue")
+            self.image = NUM_FONT.render(self.text.upper(), fgcolor=self.color)[0]
+        else:
+            self.color = pygame.Color("red")
+            self.image = NUM_FONT.render(self.text.upper(), fgcolor=self.color)[0]
         if text == "pause":
             self.image = NUM_FONT.render("RESUME", fgcolor=pygame.Color("red"))[0]
         if text == "resume":
@@ -441,13 +449,14 @@ class Message:
 
 
 class Menu:
-    def __init__(self, screen, buttons=[[100, 100, 'Exite', (255, 0, 0), (0, 0, 255)]]):
+    def __init__(self, screen, buttons=[[100, 100, 'Exit', (255, 0, 0), (0, 0, 255)]]):
         self.buttons = buttons
         self.screen = screen
         self.font = pygame.freetype.Font("D3Digitalism.ttf", 50)
 
     def show_buttons(self, btn_num=-1):
         for btn in self.buttons:
+            print(btn)
             if btn_num == self.buttons.index(btn) and btn_num != -1:
                 self.screen.blit(self.font.render(btn[2], btn[4])[0], (btn[0], btn[1]))
             else:
@@ -458,7 +467,7 @@ class Menu:
             btn = -1
             self.screen.fill((20, 20, 20))
 
-            x, y = pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]
+            x, y = pygame.mouse.get_pos()
             for b in self.buttons:
                 if x > b[0] and x < b[0] + 430 and y > b[1] and y < b[1] + 50:
                     btn = self.buttons.index(b)
@@ -472,7 +481,6 @@ class Menu:
                         sys.exit()
 
             pygame.display.flip()
-
 
 
 _cycle_ = "Start Menu"
@@ -536,12 +544,12 @@ while running:
         for event in pygame.event.get():
             if key[pygame.K_ESCAPE]:
                 if paused:
-                    button_pause.update("resume")
+                    button_pause.update(change=True, text="resume")
                     t1 = time.time()
                     paused = False
                     pygame.mixer.music.unpause()
                 else:
-                    button_pause.update("pause")
+                    button_pause.update(change=True, text="pause")
                     t = time.time()
                     paused = True
                     pygame.mixer.music.pause()
@@ -553,14 +561,15 @@ while running:
                 if button_restart.rect.collidepoint(*pos):
                     restart()
                 if button_pause.rect.collidepoint(*pos):
+                    print("collide")
                     if paused:
-                        button_pause.update("resume")
+                        button_pause.update(text="resume")
                         t1 += time.time()
                         pygame.mixer.music.unpause()
                         paused = False
                         pygame.mixer.music.unpause()
                     else:
-                        button_pause.update("pause")
+                        button_pause.update(text="pause")
                         t += time.time()
                         paused = True
                         pygame.mixer.music.pause()
@@ -572,6 +581,8 @@ while running:
         planet_group.draw(screen)
         player_group.draw(screen)
         scan_group.draw(screen)
+        for i in button_group:
+            i.update()
         if status.update("success"):
             screen.blit(*status.to_blit["success"])
             show_text = False
