@@ -217,7 +217,17 @@ class Planet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
-        Atmosphere(pos_x, pos_y, self.image.get_size()[0])
+        Atmosphere(pos_x, pos_y, self.image.get_size()[0] // 2)
+
+
+def inertion(cur, min, delta):
+    if cur > 0:
+        cur -= delta
+        cur = min if cur <= min else cur
+    if cur < 0:
+        cur += delta
+        cur = -min if cur > -min else cur
+    return int(cur)
 
 
 class Atmosphere(pygame.sprite.Sprite):
@@ -231,7 +241,11 @@ class Atmosphere(pygame.sprite.Sprite):
 
     def update(self):
         if pygame.sprite.spritecollideany(player, atmosphere_group):
-            print("collide")
+            a = pygame.sprite.spritecollide(player, atmosphere_group, False)
+            if pygame.sprite.collide_mask(a[0], player):
+                vx = inertion(player.vx, 0, 0.5) if player.vx else 0
+                vy = inertion(player.vx, 0, 0.5) if player.vy else 0
+                player.vx, player.vy = vx, vy
 
 
 class Button(pygame.sprite.Sprite):
@@ -248,7 +262,7 @@ class Button(pygame.sprite.Sprite):
             self.rect = self.image.get_rect().move(20, 80)
         self.mask = pygame.mask.from_surface(self.image)
 
-    def update(self, text=""):
+    def update(self, text):
         pos = pygame.mouse.get_pos()
         if self.rect.collidepoint(*pos):
             self.color = pygame.Color("blue")
@@ -256,10 +270,12 @@ class Button(pygame.sprite.Sprite):
         else:
             self.color = pygame.Color("red")
             self.image = NUM_FONT.render(self.text.upper(), fgcolor=self.color)[0]
-        if text == "pause":
-            self.image = NUM_FONT.render("RESUME", fgcolor=pygame.Color("red"))[0]
-        if text == "resume":
-            self.image = NUM_FONT.render("PAUSE", fgcolor=pygame.Color("red"))[0]
+        if text:
+            if text == "pause":
+                self.text = "resume"
+            if text == "resume":
+                self.text = "pause"
+            self.image = NUM_FONT.render(self.text.upper(), fgcolor=pygame.Color("red"))[0]
 
 
 class Star(pygame.sprite.Sprite):
@@ -281,8 +297,8 @@ class Status:
 
     def update(self, text):
         if scan_group.sprites() and text == "success":
-            if pygame.sprite.spritecollideany(scan_group.sprites()[0], planet_group):
-                a = pygame.sprite.spritecollide(scan_group.sprites()[0], planet_group, False)
+            if pygame.sprite.spritecollideany(scan_group.sprites()[0], atmosphere_group):
+                a = pygame.sprite.spritecollide(scan_group.sprites()[0], atmosphere_group, False)
 
                 if a[0] not in known:
                     known.append(a[0])
@@ -559,12 +575,12 @@ while running:
         for event in pygame.event.get():
             if key[pygame.K_ESCAPE]:
                 if paused:
-                    button_pause.update(change=True, text="resume")
+                    button_pause.update("resume")
                     t1 = time.time()
                     paused = False
                     pygame.mixer.music.unpause()
                 else:
-                    button_pause.update(change=True, text="pause")
+                    button_pause.update("pause")
                     t = time.time()
                     paused = True
                     pygame.mixer.music.pause()
@@ -576,15 +592,14 @@ while running:
                 if button_restart.rect.collidepoint(*pos):
                     restart()
                 if button_pause.rect.collidepoint(*pos):
-                    print("collide")
                     if paused:
-                        button_pause.update(text="resume")
+                        button_pause.update("resume")
                         t1 += time.time()
                         pygame.mixer.music.unpause()
                         paused = False
                         pygame.mixer.music.unpause()
                     else:
-                        button_pause.update(text="pause")
+                        button_pause.update("pause")
                         t += time.time()
                         paused = True
                         pygame.mixer.music.pause()
@@ -598,7 +613,7 @@ while running:
         player_group.draw(screen)
         scan_group.draw(screen)
         for i in button_group:
-            i.update()
+            i.update("")
         if status.update("success"):
             screen.blit(*status.to_blit["success"])
             show_text = False
