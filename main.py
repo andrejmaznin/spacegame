@@ -89,7 +89,7 @@ def generate_map(filename):
             planets = []
             x1, y1 = random.randint(4, 45), random.randint(4, 45)
             while True:
-                if abs(x1 - 24) >= 4 and abs(y1 - 24) >= 4:
+                if abs(x1 - 24) >= 5 and abs(y1 - 24) >= 5:
                     a[y1][x1] = "P"
                     planets.append([x1, y1])
                     break
