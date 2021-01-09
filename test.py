@@ -217,6 +217,21 @@ class Planet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
+        Atmosphere(pos_x, pos_y, self.image.get_size()[0])
+
+
+class Atmosphere(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, radius):
+        super().__init__(atmosphere_group, all_sprites)
+        self.image = pygame.Surface((radius * 2 + tile_width * 2, radius * 2 + tile_height * 2))
+        pygame.draw.circle(self.image, (0, 0, 0), (tile_width + radius, tile_height + radius), radius + tile_height)
+        self.rect = self.image.get_rect().move(
+            tile_width * (pos_x - 1), tile_height * (pos_y - 1))
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self):
+        if pygame.sprite.spritecollideany(player, atmosphere_group):
+            print("collide")
 
 
 class Button(pygame.sprite.Sprite):
@@ -440,11 +455,9 @@ class Message:
 
     def update(self, pos):
         global show_text
-        print(1)
         if self.but_x + 400 <= pos[0] <= self.but_x + self.button.get_size()[0] + 400 and self.but_y + 400 <= pos[
             1] <= self.but_y + 400 + \
                 self.button.get_size()[1]:
-            print(2)
             show_text = False
 
 
@@ -483,7 +496,7 @@ class Menu:
             pygame.display.flip()
 
 
-_cycle_ = "Start Menu"
+_cycle_ = "Main Cycle"
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -493,10 +506,12 @@ star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
 button_group = pygame.sprite.Group()
+atmosphere_group = pygame.sprite.Group()
 
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
-               "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
+               "planet": [load_image("planet.png"), load_image("planet2.png"),
+                          load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
                'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
 generate_map("aaa.txt")
@@ -523,7 +538,7 @@ show_text = False
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
-
+pygame.mixer.music.set_volume(0)
 while running:
     if _cycle_ == "Start Menu":
         menu = Menu(screen, [[100, 100, 'Start Game', (255, 0, 0), (0, 0, 255)],
@@ -575,7 +590,8 @@ while running:
                         pygame.mixer.music.pause()
                 if button_exit.rect.collidepoint(*pos):
                     running = False
-
+        atmosphere_group.draw(screen)
+        atmosphere_group.update()
         floor_group.draw(screen)
         star_group.draw(screen)
         planet_group.draw(screen)
