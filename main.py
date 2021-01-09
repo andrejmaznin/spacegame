@@ -167,16 +167,6 @@ def minimap():
                          (x, height - tile_height * 2 + y, 10, 10))
 
 
-def start_game():
-    global _cycle_
-    _cycle_ = 'Main Cycle'
-    print(_cycle_)
-
-def test():
-    global  _cycle_
-    start_game()
-    print(_cycle_)
-
 class Floor(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, columns=8, rows=8):
         super().__init__(floor_group, all_sprites)
@@ -227,6 +217,35 @@ class Planet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.mask = pygame.mask.from_surface(self.image)
+        Atmosphere(pos_x, pos_y, self.image.get_size()[0] // 2)
+
+
+def inertion(cur, min, delta):
+    if cur > 0:
+        cur -= delta
+        cur = min if cur <= min else cur
+    if cur < 0:
+        cur += delta
+        cur = -min if cur > -min else cur
+    return int(cur)
+
+
+class Atmosphere(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, radius):
+        super().__init__(atmosphere_group, all_sprites)
+        self.image = pygame.Surface((radius * 2 + tile_width * 2, radius * 2 + tile_height * 2))
+        pygame.draw.circle(self.image, (0, 0, 0), (tile_width + radius, tile_height + radius), radius + tile_height)
+        self.rect = self.image.get_rect().move(
+            tile_width * (pos_x - 1), tile_height * (pos_y - 1))
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self):
+        if pygame.sprite.spritecollideany(player, atmosphere_group):
+            a = pygame.sprite.spritecollide(player, atmosphere_group, False)
+            if pygame.sprite.collide_mask(a[0], player):
+                vx = inertion(player.vx, 0, 0.5) if player.vx else 0
+                vy = inertion(player.vx, 0, 0.5) if player.vy else 0
+                player.vx, player.vy = vx, vy
 
 
 class Button(pygame.sprite.Sprite):
@@ -243,7 +262,7 @@ class Button(pygame.sprite.Sprite):
             self.rect = self.image.get_rect().move(20, 80)
         self.mask = pygame.mask.from_surface(self.image)
 
-    def update(self, text=""):
+    def update(self, text):
         pos = pygame.mouse.get_pos()
         if self.rect.collidepoint(*pos):
             self.color = pygame.Color("blue")
@@ -251,10 +270,12 @@ class Button(pygame.sprite.Sprite):
         else:
             self.color = pygame.Color("red")
             self.image = NUM_FONT.render(self.text.upper(), fgcolor=self.color)[0]
-        if text == "pause":
-            self.image = NUM_FONT.render("RESUME", fgcolor=pygame.Color("red"))[0]
-        if text == "resume":
-            self.image = NUM_FONT.render("PAUSE", fgcolor=pygame.Color("red"))[0]
+        if text:
+            if text == "pause":
+                self.text = "resume"
+            if text == "resume":
+                self.text = "pause"
+            self.image = NUM_FONT.render(self.text.upper(), fgcolor=pygame.Color("red"))[0]
 
 
 class Star(pygame.sprite.Sprite):
@@ -276,8 +297,8 @@ class Status:
 
     def update(self, text):
         if scan_group.sprites() and text == "success":
-            if pygame.sprite.spritecollideany(scan_group.sprites()[0], planet_group):
-                a = pygame.sprite.spritecollide(scan_group.sprites()[0], planet_group, False)
+            if pygame.sprite.spritecollideany(scan_group.sprites()[0], atmosphere_group):
+                a = pygame.sprite.spritecollide(scan_group.sprites()[0], atmosphere_group, False)
 
                 if a[0] not in known:
                     known.append(a[0])
@@ -450,30 +471,28 @@ class Message:
 
     def update(self, pos):
         global show_text
-        print(1)
         if self.but_x + 400 <= pos[0] <= self.but_x + self.button.get_size()[0] + 400 and self.but_y + 400 <= pos[
             1] <= self.but_y + 400 + \
                 self.button.get_size()[1]:
-            print(2)
             show_text = False
 
 
 class Menu:
-    def __init__(self, screen, buttons=[[100, 100, 'Exit', (255, 0, 0), (0, 0, 255), sys.exit]]):
+    def __init__(self, screen, buttons=[[100, 100, 'Exit', (255, 0, 0), (0, 0, 255)]]):
         self.buttons = buttons
         self.screen = screen
         self.font = pygame.freetype.Font("D3Digitalism.ttf", 50)
 
     def show_buttons(self, btn_num=-1):
         for btn in self.buttons:
+            print(btn)
             if btn_num == self.buttons.index(btn) and btn_num != -1:
                 self.screen.blit(self.font.render(btn[2], btn[4])[0], (btn[0], btn[1]))
             else:
                 self.screen.blit(self.font.render(btn[2], btn[3])[0], (btn[0], btn[1]))
 
     def show_menu(self):
-        global _cycle_
-        while _cycle_ != 'Main Cycle':
+        while True:
             btn = -1
             self.screen.fill((20, 20, 20))
 
@@ -489,14 +508,11 @@ class Menu:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         sys.exit()
-                if event.type == pygame.MOUSEBUTTONUP:
-                    function = self.buttons[btn][5]
-                    function()
 
             pygame.display.flip()
 
 
-_cycle_ = "Start Menu"
+_cycle_ = "Main Cycle"
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -506,10 +522,12 @@ star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
 button_group = pygame.sprite.Group()
+atmosphere_group = pygame.sprite.Group()
 
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
-               "planet": [load_image("planet.png"), load_image("planet2.png"), load_image("planet3.png")],
+               "planet": [load_image("planet.png"), load_image("planet2.png"),
+                          load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
                'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
 generate_map("aaa.txt")
@@ -536,12 +554,12 @@ show_text = False
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
-
+pygame.mixer.music.set_volume(0)
 while running:
     if _cycle_ == "Start Menu":
-        menu = Menu(screen, [[100, 100, 'Start Game', (255, 0, 0), (0, 0, 255), test],
-                             [100, 170, 'New Game', (255, 0, 0), (0, 0, 255), restart],
-                             [100, 240, 'Exite', (255, 0, 0), (0, 0, 255), sys.exit]])
+        menu = Menu(screen, [[100, 100, 'Start Game', (255, 0, 0), (0, 0, 255)],
+                             [100, 170, 'New Game', (255, 0, 0), (0, 0, 255)],
+                             [100, 240, 'Exite', (255, 0, 0), (0, 0, 255)]])
         menu.show_menu()
 
     elif _cycle_ == "Main Cycle":
@@ -557,12 +575,12 @@ while running:
         for event in pygame.event.get():
             if key[pygame.K_ESCAPE]:
                 if paused:
-                    button_pause.update(change=True, text="resume")
+                    button_pause.update("resume")
                     t1 = time.time()
                     paused = False
                     pygame.mixer.music.unpause()
                 else:
-                    button_pause.update(change=True, text="pause")
+                    button_pause.update("pause")
                     t = time.time()
                     paused = True
                     pygame.mixer.music.pause()
@@ -574,28 +592,28 @@ while running:
                 if button_restart.rect.collidepoint(*pos):
                     restart()
                 if button_pause.rect.collidepoint(*pos):
-                    print("collide")
                     if paused:
-                        button_pause.update(text="resume")
+                        button_pause.update("resume")
                         t1 += time.time()
                         pygame.mixer.music.unpause()
                         paused = False
                         pygame.mixer.music.unpause()
                     else:
-                        button_pause.update(text="pause")
+                        button_pause.update("pause")
                         t += time.time()
                         paused = True
                         pygame.mixer.music.pause()
                 if button_exit.rect.collidepoint(*pos):
                     running = False
-
+        atmosphere_group.draw(screen)
+        atmosphere_group.update()
         floor_group.draw(screen)
         star_group.draw(screen)
         planet_group.draw(screen)
         player_group.draw(screen)
         scan_group.draw(screen)
         for i in button_group:
-            i.update()
+            i.update("")
         if status.update("success"):
             screen.blit(*status.to_blit["success"])
             show_text = False
