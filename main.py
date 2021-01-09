@@ -167,6 +167,16 @@ def minimap():
                          (x, height - tile_height * 2 + y, 10, 10))
 
 
+def start_game():
+    global _cycle_
+    _cycle_ = 'Main Cycle'
+    print(_cycle_)
+
+def test():
+    global  _cycle_
+    start_game()
+    print(_cycle_)
+
 class Floor(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, columns=8, rows=8):
         super().__init__(floor_group, all_sprites)
@@ -462,7 +472,8 @@ class Menu:
                 self.screen.blit(self.font.render(btn[2], btn[3])[0], (btn[0], btn[1]))
 
     def show_menu(self):
-        while True:
+        global _cycle_
+        while _cycle_ != 'Main Cycle':
             btn = -1
             self.screen.fill((20, 20, 20))
 
@@ -478,6 +489,9 @@ class Menu:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         sys.exit()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    function = self.buttons[btn][5]
+                    function()
 
             pygame.display.flip()
 
@@ -525,9 +539,9 @@ pygame.mixer.music.play()
 
 while running:
     if _cycle_ == "Start Menu":
-        menu = Menu(screen, [[100, 100, 'Start Game', (255, 0, 0), (0, 0, 255)],
-                             [100, 170, 'New Game', (255, 0, 0), (0, 0, 255)],
-                             [100, 240, 'Exite', (255, 0, 0), (0, 0, 255)]])
+        menu = Menu(screen, [[100, 100, 'Start Game', (255, 0, 0), (0, 0, 255), test],
+                             [100, 170, 'New Game', (255, 0, 0), (0, 0, 255), restart],
+                             [100, 240, 'Exite', (255, 0, 0), (0, 0, 255), sys.exit]])
         menu.show_menu()
 
     elif _cycle_ == "Main Cycle":
