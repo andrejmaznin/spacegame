@@ -387,12 +387,7 @@ class Player(pygame.sprite.Sprite):
                     self.cur_frame = 3
                     self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
             else:
-                if self.vy > 0:
-                    self.vy -= DELTA_V
-                    self.vy = 0 if self.vy <= 0 else self.vy
-                if self.vy < 0:
-                    self.vy += DELTA_V
-                    self.vy = 0 if self.vy >= 0 else self.vy
+                self.vy = inertion(self.vy, 0, DELTA_V)
 
             if keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[pygame.K_a] or keys[pygame.K_d]:
                 if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -402,12 +397,8 @@ class Player(pygame.sprite.Sprite):
                     self.cur_frame = 2
                     self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
             else:
-                if self.vx > 0:
-                    self.vx -= DELTA_V
-                    self.vx = 0 if self.vx <= 0 else self.vx
-                if self.vx < 0:
-                    self.vx += DELTA_V
-                    self.vx = 0 if self.vx >= 0 else self.vx
+                self.vx = inertion(self.vx, 0, DELTA_V)
+
             if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
                 self.cur_frame = 4
                 # self.vx, self.vy = V_45, -V_45
