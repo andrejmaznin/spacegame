@@ -555,7 +555,7 @@ class Menu:
         for i in range(num):
             coord_x = randint(int(x / divider), x)
             coord_y = randint(int(y / divider), y)
-            raduis = randint(1, 5)
+            raduis = randint(1, 2)
             self.stars.append((coord_x, coord_y, raduis))
 
     def generate_sky(self):
