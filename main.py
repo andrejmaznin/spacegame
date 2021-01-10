@@ -248,11 +248,13 @@ class Scan(pygame.sprite.Sprite):
 class Planet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(planet_group, all_sprites)
-        self.image = random.choice(tile_images["planet"])
+        num = random.randint(0, len((tile_images["planet"])) - 1)
+        self.image = tile_images["planet"][num]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
+        self.center = (self.rect.x + tile_width, self.rect.y + tile_height)
         self.mask = pygame.mask.from_surface(self.image)
-        Atmosphere(pos_x, pos_y, self.image.get_size()[0] // 2)
+        Atmosphere(pos_x, pos_y, num)
 
 
 def inertion(cur, min, delta):
@@ -266,10 +268,9 @@ def inertion(cur, min, delta):
 
 
 class Atmosphere(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y, radius):
+    def __init__(self, pos_x, pos_y, num):
         super().__init__(atmosphere_group, all_sprites)
-        self.image = pygame.Surface((radius * 2 + tile_width * 2, radius * 2 + tile_height * 2))
-        pygame.draw.circle(self.image, (0, 0, 0), (tile_width + radius, tile_height + radius), radius + tile_height)
+        self.image = tile_images["atmosphere"][num]
         self.rect = self.image.get_rect().move(
             tile_width * (pos_x - 1), tile_height * (pos_y - 1))
         self.mask = pygame.mask.from_surface(self.image)
@@ -326,6 +327,7 @@ class Camera:
                 obj.rect.y += self.dy
             if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
                 obj.rect.x += self.dx
+        obj.center = (obj.rect.x + tile_width, obj.rect.y + tile_height)
 
     def update(self, target):
         if not paused:
@@ -341,6 +343,7 @@ class Player(pygame.sprite.Sprite):
         self.cut_sheet(player_image, columns, rows)
         self.image = self.frames[self.cur_frame]
         self.rect = self.rect.move(pos_x * tile_width, pos_y * tile_height)
+        self.center = [self.rect.x + tile_width // 2, self.rect.y + tile_height // 2]
         self.mask = pygame.mask.from_surface(self.image)
         self.vx = 0
         self.vy = 0
@@ -356,6 +359,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, keys, *args):
         global scan_group, scan_sound
+        self.center = [self.rect.x + tile_width // 2, self.rect.y + tile_height // 2]
         if not paused:
             scan_group = pygame.sprite.Group()
             if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_s] or keys[pygame.K_w]:
@@ -414,8 +418,11 @@ class Player(pygame.sprite.Sprite):
 
                 for i in b:
                     if pygame.sprite.collide_mask(self, i):
-                        self.vx = -self.vx
-                        self.vy = -self.vy
+
+                        if (self.center[0] - i.center[0]) * self.vx < 0:
+                            self.vx = -self.vx
+                        if (self.center[1] - i.center[1]) * self.vy < 0:
+                            self.vy = -self.vy
             self.image = self.frames[self.cur_frame]
 
             self.rect = self.rect.move(self.vx, self.vy)
@@ -550,7 +557,9 @@ tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"),
                           load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
-               'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
+               'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png"),
+               "atmosphere": [load_image("atmosphere.png"), load_image("atmosphere2.png"),
+                              load_image("atmosphere3.png")]}
 generate_map("aaa.txt")
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
@@ -608,11 +617,13 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 messages[0].update(pos)
-        atmosphere_group.draw(screen)
-        atmosphere_group.update()
+
         floor_group.draw(screen)
         star_group.draw(screen)
+        atmosphere_group.draw(screen)
+        atmosphere_group.update()
         planet_group.draw(screen)
+
         player_group.draw(screen)
         scan_group.draw(screen)
         if status.update("success"):

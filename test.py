@@ -233,7 +233,7 @@ def inertion(cur, min, delta):
 class Atmosphere(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, radius):
         super().__init__(atmosphere_group, all_sprites)
-        self.image = pygame.Surface((radius * 2 + tile_width * 2, radius * 2 + tile_height * 2))
+        self.image = tile_images["atmosphere"]
         pygame.draw.circle(self.image, (0, 0, 0), (tile_width + radius, tile_height + radius), radius + tile_height)
         self.rect = self.image.get_rect().move(
             tile_width * (pos_x - 1), tile_height * (pos_y - 1))
@@ -529,7 +529,8 @@ tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"),
                           load_image("planet3.png")],
                'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
-               'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png")}
+               'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png"),
+               "atmosphere": load_image("atmosphere.png")}
 generate_map("aaa.txt")
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
@@ -605,11 +606,12 @@ while running:
                         pygame.mixer.music.pause()
                 if button_exit.rect.collidepoint(*pos):
                     running = False
-        atmosphere_group.draw(screen)
-        atmosphere_group.update()
+
         floor_group.draw(screen)
         star_group.draw(screen)
         planet_group.draw(screen)
+        atmosphere_group.draw(screen)
+        atmosphere_group.update()
         player_group.draw(screen)
         scan_group.draw(screen)
         for i in button_group:
