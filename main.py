@@ -79,7 +79,7 @@ def save(filename):
         level_map = [line.strip() for line in mapFile]
         level_map.insert(0, str(player.rect.x) + str(player.rect.y))
         level_map.insert(0, "system_name")
-        level_map.insert(0, str(known))
+        level_map.insert(0, str(len(known)))
         level_map.insert(0, str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height))
         level_map.insert(0, "saved")
         level_map = "".join(["".join(i) + "\n" for i in level_map])
