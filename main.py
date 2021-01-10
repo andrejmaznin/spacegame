@@ -77,13 +77,17 @@ def load_level(filename):
 def save(filename):
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-        level_map.insert(0, str(player.rect.x) + str(player.rect.y))
         level_map.insert(0, "system_name")
         level_map.insert(0, str(len(known)))
         level_map.insert(0, str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height))
         level_map.insert(0, "saved")
         level_map = "".join(["".join(i) + "\n" for i in level_map])
+        mapFile.close()
+    with open(filename, 'w') as mapFile:
+        print(level_map)
+        print(type(level_map))
         mapFile.write(level_map)
+        mapFile.close()
 
 
 def generate_map(filename):
@@ -576,6 +580,7 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
+save("aaa.txt")
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
