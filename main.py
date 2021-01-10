@@ -190,6 +190,7 @@ def show_settings():
 
 def return_to_main_menu():
     global _cycle_
+    save('aaa.txt')
     _cycle_ = 'Start Menu'
 
 
