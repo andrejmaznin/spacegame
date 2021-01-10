@@ -50,13 +50,6 @@ def restart():
     star_group = pygame.sprite.Group()
     planet_group = pygame.sprite.Group()
     scan_group = pygame.sprite.Group()
-    button_group = pygame.sprite.Group()
-    Button("restart")
-    Button("pause")
-    Button("exit")
-    button_restart = button_group.sprites()[0]
-    button_pause = button_group.sprites()[1]
-    button_exit = button_group.sprites()[2]
     generate_map("aaa.txt")
     player, level_x, level_y = generate_level(load_level('aaa.txt'))
     camera = Camera()
@@ -79,6 +72,18 @@ def load_level(filename):
 
     # ��������� ������ ������ ������� �������� ('.')
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+
+def save(filename):
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+        level_map.insert(0, str(player.rect.x) + str(player.rect.y))
+        level_map.insert(0, "system_name")
+        level_map.insert(0, str(known))
+        level_map.insert(0, str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height))
+        level_map.insert(0, "saved")
+        level_map = "".join(["".join(i) + "\n" for i in level_map])
+        mapFile.write(level_map)
 
 
 def generate_map(filename):
@@ -117,8 +122,12 @@ def generate_map(filename):
 
 
 def generate_level(level):
-    global tiles_x, tiles_y
-    new_player, x, y = None, None, None
+    global tiles_x, tiles_y, known
+    if level[0] == "saved":
+        new_player = Player(*list(map(int, level[1].split())))
+        known = int(level[2])
+    else:
+        new_player, x, y = None, None, None
     tiles_y = len(level)
     tiles_x = len(level[0])
     for y in range(len(level)):
@@ -133,8 +142,8 @@ def generate_level(level):
                 Planet(x, y)
             elif level[y][x] == '@':
                 Floor(x, y)
-                new_player = Player(x, y)
-    # ������ ������, � ����� ������ ���� � �������
+                if not new_player:
+                    new_player = Player(x, y)
     return new_player, x, y
 
 
@@ -272,36 +281,6 @@ class Atmosphere(pygame.sprite.Sprite):
                 vx = inertion(player.vx, 0, 0.5) if player.vx else 0
                 vy = inertion(player.vx, 0, 0.5) if player.vy else 0
                 player.vx, player.vy = vx, vy
-
-
-class Button(pygame.sprite.Sprite):
-    def __init__(self, text, position=(0, 0)):
-        super().__init__(button_group, button_group)
-        self.color = pygame.Color("red")
-        self.image = NUM_FONT.render(text.upper(), fgcolor=self.color)[0]
-        self.text = text
-        if text == "restart":
-            self.rect = self.image.get_rect().move(20, 20)
-        if text == "pause":
-            self.rect = self.image.get_rect().move(20, 50)
-        if text == "exit":
-            self.rect = self.image.get_rect().move(20, 80)
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def update(self, text):
-        pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(*pos):
-            self.color = pygame.Color("blue")
-            self.image = NUM_FONT.render(self.text.upper(), fgcolor=self.color)[0]
-        else:
-            self.color = pygame.Color("red")
-            self.image = NUM_FONT.render(self.text.upper(), fgcolor=self.color)[0]
-        if text:
-            if text == "pause":
-                self.text = "resume"
-            if text == "resume":
-                self.text = "pause"
-            self.image = NUM_FONT.render(self.text.upper(), fgcolor=pygame.Color("red"))[0]
 
 
 class Star(pygame.sprite.Sprite):
@@ -564,7 +543,6 @@ floor_group = pygame.sprite.Group()
 star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
-button_group = pygame.sprite.Group()
 atmosphere_group = pygame.sprite.Group()
 
 player_image = load_image("car2.png")
@@ -577,12 +555,6 @@ generate_map("aaa.txt")
 player, level_x, level_y = generate_level(load_level('aaa.txt'))
 camera = Camera()
 status = Status()
-Button("restart")
-Button("pause")
-Button("exit")
-button_restart = button_group.sprites()[0]
-button_pause = button_group.sprites()[1]
-button_exit = button_group.sprites()[2]
 bottom_left = floor_group.sprites()[-1]
 top_right = floor_group.sprites()[0]
 messages = []
