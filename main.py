@@ -118,7 +118,7 @@ def generate_map(filename):
                         x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
             a[23][23] = "@"
-
+            a[22][22] = "A"
             a = "".join(["".join(i) + "\n" for i in a])
             mapFile.write(a)
     except Exception:
@@ -144,6 +144,9 @@ def generate_level(level):
             elif level[y][x] == 'P':
                 Floor(x, y)
                 Planet(x, y)
+            elif level[y][x] == 'A':
+                Floor(x, y)
+                Asteroid(x, y)
             elif level[y][x] == '@':
                 Floor(x, y)
                 if not new_player:
@@ -546,6 +549,65 @@ class Menu:
         self.generate_stars(50, 8)
 
 
+class Asteroid(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, columns=1, rows=1):
+        super().__init__(asteroid_group, all_sprites)
+        self.frames = []
+        self.cur_frame = 0
+        self.cut_sheet(tile_images["wall"], columns, rows)
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(pos_x * tile_width, pos_y * tile_height)
+        self.center = [self.rect.x + tile_width // 2, self.rect.y + tile_height // 2]
+        self.mask = pygame.mask.from_surface(self.image)
+        self.vx = 0
+        self.vy = 0
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self, keys, *args):
+        global scan_group, scan_sound
+        self.center = [self.rect.x + tile_width // 2, self.rect.y + tile_height // 2]
+        if not paused:
+            if pygame.sprite.spritecollideany(self, atmosphere_group):
+                a = pygame.sprite.spritecollide(self, atmosphere_group, False)
+                if pygame.sprite.collide_mask(a[0], player):
+                    vx = inertion(player.vx, 0, 0.5) if self.vx else 0
+                    vy = inertion(player.vx, 0, 0.5) if self.vy else 0
+                    self.vx, self.vy = vx, vy
+            if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
+                a = pygame.sprite.spritecollide(self, star_group, False)
+                b = pygame.sprite.spritecollide(self, planet_group, False)
+
+                for i in a:
+                    if pygame.sprite.collide_mask(self, i):
+                        self.vx = -self.vx
+                        self.vy = -self.vy
+
+                for i in b:
+                    if pygame.sprite.collide_mask(self, i):
+                        if (self.center[0] - i.center[0]) * self.vx < 0:
+                            self.vx = -self.vx
+                        if (self.center[1] - i.center[1]) * self.vy < 0:
+                            self.vy = -self.vy
+            if pygame.sprite.spritecollideany(self, player_group):
+                print(1)
+                x = player.vx
+                y = player.vy
+                self.vx = self.vx + int(x * 0.5) if abs(self.vx <= V) else self.vx
+                self.vy = self.vy + int(y * 0.5) if abs(self.vy <= V) else self.vy
+                player.vx = int(x * 0.3)
+                player.vy = int(y * 0.3)
+            self.image = self.frames[self.cur_frame]
+            self.rect = self.rect.move(self.vx, self.vy)
+
+
 _cycle_ = "Start Menu"
 
 all_sprites = pygame.sprite.Group()
@@ -556,12 +618,12 @@ star_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
 atmosphere_group = pygame.sprite.Group()
-
+asteroid_group = pygame.sprite.Group()
 player_image = load_image("car2.png")
 tile_images = {"sun": load_image("sun.png"),
                "planet": [load_image("planet.png"), load_image("planet2.png"),
                           load_image("planet3.png")],
-               'wall': [load_image('obstacle.png'), load_image('obstacle2.png'), load_image('obstacle3.png')],
+               'wall': load_image('obstacle.png'),
                'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png"),
                "atmosphere": [load_image("atmosphere.png"), load_image("atmosphere2.png"),
                               load_image("atmosphere3.png")]}
@@ -629,7 +691,8 @@ while running:
         atmosphere_group.draw(screen)
         atmosphere_group.update()
         planet_group.draw(screen)
-
+        asteroid_group.update(key)
+        asteroid_group.draw(screen)
         player_group.draw(screen)
         scan_group.draw(screen)
         if status.update("success"):
