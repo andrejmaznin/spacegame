@@ -42,7 +42,7 @@ tiles_x, tiles_y = 0, 0
 def restart():
     global player, level_x, level_y, camera, status, known, paused, start, printed_time, all_sprites, tiles_group, \
         planet_group, player_group, star_group, floor_group, scan_group, button_group, button_exit, button_restart, \
-        button_pause, top_right, bottom_left
+        button_pause, top_right, bottom_left, asteroid_group, atmosphere_group
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
@@ -50,6 +50,8 @@ def restart():
     star_group = pygame.sprite.Group()
     planet_group = pygame.sprite.Group()
     scan_group = pygame.sprite.Group()
+    asteroid_group = pygame.sprite.Group()
+    atmosphere_group = pygame.sprite.Group()
     generate_map("aaa.txt")
     player, level_x, level_y = generate_level(load_level('aaa.txt'))
     camera = Camera()
