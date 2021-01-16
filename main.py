@@ -6,14 +6,11 @@ import traceback
 import os
 import sys
 import time
-
-from random import randint
-
 # import simpleaudio
+from random import randint
 
 pygame.init()
 
-size = 500, 500
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 infoObject = pygame.display.Info()
 width, height = infoObject.current_w, infoObject.current_h
@@ -204,12 +201,27 @@ def return_to_main_menu():
 
 
 def show_star_system_map():
-    pass
+    global _cycle_
+    _cycle_ = "Star System Map"
 
 
 def continue_game():
     global _cycle_
     _cycle_ = 'Main Cycle'
+
+
+def do_nothing():
+    pass
+
+
+def change_volume(new):
+    global volume
+    volume = new
+
+
+def set_pause():
+    global _cycle_
+    _cycle_ = 'Pause'
 
 
 class Floor(pygame.sprite.Sprite):
@@ -492,7 +504,7 @@ class Message:
 
 class Menu:
     def __init__(self, screen, cycle_name, buttons=[[100, 100, 'exit', (255, 0, 0), (0, 0, 255), sys.exit]],
-                 k_escape_fun=sys.exit, ):
+                 k_escape_fun=sys.exit):
         self.buttons = buttons
         self.screen = screen
         self.k_escape = k_escape_fun
@@ -509,19 +521,13 @@ class Menu:
 
     def show_menu(self):
         global _cycle_
-        self.generate_sky()
         while _cycle_ == self.cycle_name:
             btn = -1
             self.screen.fill((0, 0, 0))
 
             for el in self.stars:
                 pygame.draw.circle(self.screen, (255, 255, 255), (el[0], el[1]), el[2])
-            x, y = pygame.mouse.get_pos()
-            for b in self.buttons:
-                if x > b[0] and x < b[0] + 430 and y > b[1] and y < b[1] + 50:
-                    btn = self.buttons.index(b)
-            self.show_buttons(btn)
-
+            btn = self.check_buttons(btn)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
@@ -549,6 +555,28 @@ class Menu:
         self.generate_stars(200, 2)
         self.generate_stars(100, 4)
         self.generate_stars(50, 8)
+
+    def check_buttons(self, btn):
+        x, y = pygame.mouse.get_pos()
+        for b in self.buttons:
+            if x > b[0] and x < b[0] + 41 * len(b[2]) and y > b[1] and y < b[1] + 50:
+                btn = self.buttons.index(b)
+        self.show_buttons(btn)
+        return btn
+
+
+# class SettingsMenu(Menu):
+#     def __init__(self, screen, cycle_name='settings',
+#                  buttons=[[100, 100, 'VOLUME', (255, 0, 0), (0, 0, 255), change_volume, (0, 100)]],
+#                  k_escape_fun=set_pause):
+#         super().__init__(self, screen, cycle_name, buttons, k_escape_fun)
+#
+#     def show_buttons(self, btn_num=-1):
+#         for btn in self.buttons:
+#             if btn_num == self.buttons.index(btn) and btn_num != -1:
+#                 self.screen.blit(self.font.render(btn[2], btn[4])[0], (btn[0], btn[1]))
+#             else:
+#                 self.screen.blit(self.font.render(btn[2], btn[3])[0], (btn[0], btn[1]))
 
 
 class Asteroid(pygame.sprite.Sprite):
@@ -610,6 +638,49 @@ class Asteroid(pygame.sprite.Sprite):
             self.rect = self.rect.move(self.vx, self.vy)
 
 
+class StarSystemMap:
+    def __init__(self, screen):
+        self.screen = screen
+        self.planets = [[200, 200, 30, 'DIE_1'],
+                        [400, 400, 30, 'DIE_2'],
+                        [500, 700, 30, 'DIE_3'],
+                        [800, 200, 30, 'DIE_4']]
+        self.routes = [(0, 1), (1, 2), (1, 3), (2, 1)]
+        self.cycle = 'Star System Map'
+
+    def show_map(self):
+        global _cycle_
+        while self.cycle == _cycle_:
+            screen.fill((0, 0, 0))
+            self.show_planets()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_ESCAPE:
+                        set_pause()
+                        break
+
+            pygame.display.flip()
+
+    def show_planets(self):
+        # route, planet =  self.check_routes()
+        for el in self.routes:
+            pygame.draw.line(self.screen, (255, 0, 0), (self.planets[el[0]][0], self.planets[el[0]][1]),
+                             (self.planets[el[1]][0], self.planets[el[1]][1]), width=15)
+        for el in self.planets:
+            pygame.draw.circle(self.screen, (255, 0, 0), (el[0], el[1]), el[2])
+
+    # def check_routes(self):
+    #     global sytem_Number
+    #     x, y = pygame.mouse.get_pos()
+    #     for i in range(len(self.planets)):
+    #         if (self.planets[i][0] - x) ** 2 + (self.planets[i][1] - y) ** 2 <= self.planets[i][2] ** 2:
+    #             if
+
+
+
 _cycle_ = "Start Menu"
 
 all_sprites = pygame.sprite.Group()
@@ -645,26 +716,29 @@ t = 0
 t1 = 0
 show_text = False
 save("aaa.txt")
+volume = 100
+sytem_Number = 0
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
-# pygame.mixer.music.set_volume(0)
+pygame.mixer.music.set_volume(volume)
 while running:
     if _cycle_ == "Start Menu":
         menu = Menu(screen, 'Start Menu', buttons=[[100, 100, 'START GAME', (255, 0, 0), (0, 0, 255), start_game],
                                                    [100, 170, 'NEW GAME', (255, 0, 0), (0, 0, 255), restart],
                                                    [100, 240, 'SETTINGS', (255, 0, 0), (0, 0, 255), show_settings],
                                                    [100, 310, 'EXIT', (255, 0, 0), (0, 0, 255), sys.exit]])
+        menu.generate_sky()
         menu.show_menu()
 
     elif _cycle_ == "Pause":
-        x, y = pygame.display.get_window_size()
         menu = Menu(screen, "Pause", buttons=[[100, 100, "CONTINUE", (0, 100, 0), (0, 0, 255), continue_game],
                                               [100, 170, "MAIN MENU", (255, 0, 0,), (0, 0, 255), return_to_main_menu],
                                               [100, 240, "STAR SYSTEMS MAP", (255, 0, 0), (0, 0, 255),
                                                show_star_system_map],
                                               [100, 310, "SETTINGS", (255, 0, 0), (0, 0, 255), show_settings]],
                     k_escape_fun=continue_game)
+        menu.generate_sky()
         menu.show_menu()
 
     elif _cycle_ == "Main Cycle":
@@ -680,7 +754,7 @@ while running:
         for event in pygame.event.get():
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_ESCAPE:
-                    _cycle_ = 'Pause'
+                    set_pause()
                     break
             if event.type == pygame.QUIT:
                 running = False
@@ -710,5 +784,16 @@ while running:
         if key[pygame.K_SPACE] and not paused:
             scan_channel = scan_sound.play(0)
         clock.tick(50)
+
+    elif _cycle_ == "Star System Map":
+        map = StarSystemMap(screen)
+        map.show_map()
+
+    else:
+        menu = Menu(screen, _cycle_,
+                    buttons=[[100, 100, 'UNEXPECTED ERROR', (255, 255, 255), (255, 255, 255), do_nothing],
+                             [100, 170, 'RETURN TO MAIN MENU', (255, 0, 0), (0, 0, 255),
+                              return_to_main_menu]], k_escape_fun=do_nothing)
+        menu.show_menu()
 
 pygame.quit()
