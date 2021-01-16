@@ -39,7 +39,7 @@ tiles_x, tiles_y = 0, 0
 def restart():
     global player, level_x, level_y, camera, status, known, paused, start, printed_time, all_sprites, tiles_group, \
         planet_group, player_group, star_group, floor_group, scan_group, button_group, button_exit, button_restart, \
-        button_pause, top_right, bottom_left, asteroid_group, atmosphere_group
+        button_pause, top_right, bottom_left, asteroid_group, atmosphere_group, _cycle_, system_Number
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
@@ -59,6 +59,8 @@ def restart():
     printed_time = False
     bottom_left = floor_group.sprites()[-1]
     top_right = floor_group.sprites()[0]
+    _cycle_ = 'Main Cycle'
+    system_Number = 1
 
 
 def load_level(filename):
@@ -222,6 +224,12 @@ def change_volume(new):
 def set_pause():
     global _cycle_
     _cycle_ = 'Pause'
+
+
+def change_star_system():
+    global system_Number, _cycle_
+    system_Number = star_map.planet_number()
+    _cycle_ = 'Main Cycle'
 
 
 class Floor(pygame.sprite.Sprite):
@@ -641,44 +649,107 @@ class Asteroid(pygame.sprite.Sprite):
 class StarSystemMap:
     def __init__(self, screen):
         self.screen = screen
-        self.planets = [[200, 200, 30, 'DIE_1'],
-                        [400, 400, 30, 'DIE_2'],
-                        [500, 700, 30, 'DIE_3'],
-                        [800, 200, 30, 'DIE_4']]
-        self.routes = [(0, 1), (1, 2), (1, 3), (2, 1)]
+        self.font = pygame.freetype.Font("D3Digitalism.ttf", 50)
+        self.planets = [[200, 200, 30, 'SEKIRO: SHADOWS DIE TWICE'],
+                        [400, 400, 30, 'SECOND SYSTEM'],
+                        [500, 700, 30, 'THIRD SYSTEM'],
+                        [800, 200, 30, 'FORTH SYSTEM']]
+        self.routes = [(0, 1), (1, 2), (1, 3)]
         self.cycle = 'Star System Map'
+        self.new_planet = -1
 
     def show_map(self):
-        global _cycle_
-        while self.cycle == _cycle_:
-            screen.fill((0, 0, 0))
-            self.show_planets()
+        try:
+            global _cycle_
+            while self.cycle == _cycle_:
+                screen.fill((0, 0, 0))
+                route, planet = self.check_routes()
+                self.show_planets(route, planet)
+                btn_return = self.make_btn_return()
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_ESCAPE:
-                        set_pause()
-                        break
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        sys.exit()
+                    if event.type == pygame.KEYUP:
+                        if event.key == pygame.K_ESCAPE:
+                            set_pause()
+                            break
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        if planet != -1:
+                            self.new_planet = planet
+                            ask_map(self.screen)
+                        if btn_return:
+                            set_pause()
 
-            pygame.display.flip()
+                pygame.display.flip()
+        except Exception:
+            print(traceback.format_exc())
 
-    def show_planets(self):
-        # route, planet =  self.check_routes()
+    def show_planets(self, route, planet):
+        global system_Number
         for el in self.routes:
-            pygame.draw.line(self.screen, (255, 0, 0), (self.planets[el[0]][0], self.planets[el[0]][1]),
-                             (self.planets[el[1]][0], self.planets[el[1]][1]), width=15)
-        for el in self.planets:
-            pygame.draw.circle(self.screen, (255, 0, 0), (el[0], el[1]), el[2])
+            if el == route:
+                pygame.draw.line(self.screen, (0, 0, 255), (self.planets[el[0]][0], self.planets[el[0]][1]),
+                                 (self.planets[el[1]][0], self.planets[el[1]][1]), width=20)
+            else:
+                pygame.draw.line(self.screen, (255, 0, 0), (self.planets[el[0]][0], self.planets[el[0]][1]),
+                                 (self.planets[el[1]][0], self.planets[el[1]][1]), width=15)
+        for i in range(len(self.planets)):
+            if i == system_Number:
+                pygame.draw.circle(self.screen, (255, 255, 255), (self.planets[i][0], self.planets[i][1]),
+                                   self.planets[i][2])
+            elif i == planet:
+                self.screen.blit(self.font.render(self.planets[i][3], (255, 0, 0))[0], (700, 400))
+                pygame.draw.circle(self.screen, (0, 0, 255), (self.planets[i][0], self.planets[i][1]),
+                                   self.planets[i][2] + 5)
 
-    # def check_routes(self):
-    #     global sytem_Number
-    #     x, y = pygame.mouse.get_pos()
-    #     for i in range(len(self.planets)):
-    #         if (self.planets[i][0] - x) ** 2 + (self.planets[i][1] - y) ** 2 <= self.planets[i][2] ** 2:
-    #             if
+            else:
+                pygame.draw.circle(self.screen, (255, 0, 0), (self.planets[i][0], self.planets[i][1]),
+                                   self.planets[i][2])
 
+    def check_routes(self):
+        global system_Number
+        x, y = pygame.mouse.get_pos()
+        main_route = (-1, -1)
+        main_planet = -1
+        for i in range(len(self.planets)):
+            if (self.planets[i][0] - x) ** 2 + (self.planets[i][1] - y) ** 2 <= self.planets[i][2] ** 2:
+                if (min(i, system_Number), max(i, system_Number)) in self.routes:
+                    main_route = (min(i, system_Number), max(i, system_Number))
+                    main_planet = i
+        return (main_route, main_planet)
+
+    def make_btn_return(self):
+        x, y = pygame.mouse.get_pos()
+        if 25 <= x <= 75 and 25 <= y <= 75:
+            pygame.draw.polygon(self.screen, (0, 0, 255), ((75, 25), (75, 75), (25, 50)))
+            return True
+        pygame.draw.polygon(self.screen, (255, 0, 0), ((75, 25), (75, 75), (25, 50)))
+        return False
+
+    def planet_number(self):
+        return self.new_planet
+
+
+def ask_map(screen):
+    global _cycle_
+    _cycle_ = 'Ask'
+    ask = Menu(screen, "Ask", buttons=[[100, 100, "CHANGE STAR SYSTEM?", (255, 255, 255), (255, 255, 255), do_nothing],
+                                       [100, 170, "YES", (255, 0, 0,), (0, 0, 255), change_star_system],
+                                       [100, 240, "NO", (255, 0, 0), (0, 0, 255), show_star_system_map]],
+               k_escape_fun=do_nothing)
+    ask.show_menu()
+
+
+def ask_restart():
+    global screen, _cycle_
+    _cycle_ = 'Ask'
+    ask = Menu(screen, "Ask",
+               buttons=[[100, 100, "RESTART GAME PROGRESS?", (255, 255, 255), (255, 255, 255), do_nothing],
+                        [100, 170, "YES", (255, 0, 0,), (0, 0, 255), restart],
+                        [100, 240, "NO", (255, 0, 0), (0, 0, 255), return_to_main_menu]],
+               k_escape_fun=do_nothing)
+    ask.show_menu()
 
 
 _cycle_ = "Start Menu"
@@ -716,8 +787,8 @@ t = 0
 t1 = 0
 show_text = False
 save("aaa.txt")
-volume = 100
-sytem_Number = 0
+volume = 0
+system_Number = 1
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
@@ -725,7 +796,7 @@ pygame.mixer.music.set_volume(volume)
 while running:
     if _cycle_ == "Start Menu":
         menu = Menu(screen, 'Start Menu', buttons=[[100, 100, 'START GAME', (255, 0, 0), (0, 0, 255), start_game],
-                                                   [100, 170, 'NEW GAME', (255, 0, 0), (0, 0, 255), restart],
+                                                   [100, 170, 'NEW GAME', (255, 0, 0), (0, 0, 255), ask_restart],
                                                    [100, 240, 'SETTINGS', (255, 0, 0), (0, 0, 255), show_settings],
                                                    [100, 310, 'EXIT', (255, 0, 0), (0, 0, 255), sys.exit]])
         menu.generate_sky()
@@ -786,8 +857,8 @@ while running:
         clock.tick(50)
 
     elif _cycle_ == "Star System Map":
-        map = StarSystemMap(screen)
-        map.show_map()
+        star_map = StarSystemMap(screen)
+        star_map.show_map()
 
     else:
         menu = Menu(screen, _cycle_,
