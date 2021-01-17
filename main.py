@@ -197,11 +197,11 @@ def minimap():
 def start_game():
     global _cycle_
     _cycle_ = 'Main Cycle'
-    print(_cycle_)
 
 
 def show_settings():
-    pass
+    global _cycle_
+    _cycle_ = 'Settings'
 
 
 def return_to_main_menu():
@@ -587,19 +587,68 @@ class Menu:
         self.show_buttons(btn)
         return btn
 
+    def make_btn_return(self):
+        x, y = pygame.mouse.get_pos()
+        if 25 <= x <= 60 and 25 <= y <= 60:
+            pygame.draw.polygon(self.screen, (0, 0, 255), ((60, 25), (60, 60), (25, 43)))
+            return True
+        pygame.draw.polygon(self.screen, (255, 0, 0), ((60, 25), (60, 60), (25, 43)))
+        return False
 
-# class SettingsMenu(Menu):
-#     def __init__(self, screen, cycle_name='settings',
-#                  buttons=[[100, 100, 'VOLUME', (255, 0, 0), (0, 0, 255), change_volume, (0, 100)]],
-#                  k_escape_fun=set_pause):
-#         super().__init__(self, screen, cycle_name, buttons, k_escape_fun)
-#
-#     def show_buttons(self, btn_num=-1):
-#         for btn in self.buttons:
-#             if btn_num == self.buttons.index(btn) and btn_num != -1:
-#                 self.screen.blit(self.font.render(btn[2], btn[4])[0], (btn[0], btn[1]))
-#             else:
-#                 self.screen.blit(self.font.render(btn[2], btn[3])[0], (btn[0], btn[1]))
+
+class SettingsMenu(Menu):
+    def __init__(self, screen, cycle_name='Settings',
+                 buttons=[[100, 100, 'VOLUME', (255, 0, 0), (255, 0, 255), change_volume, (0, 100)]],
+                 k_escape_fun=set_pause):
+        super().__init__(screen, cycle_name, buttons, k_escape_fun)
+        print(2)
+
+    def show_menu(self):
+        global _cycle_
+        while self.cycle_name == _cycle_:
+            self.screen.fill((0, 0, 0))
+            for i in range(len(self.buttons)):
+                self.show_button(i)
+            return_btn = self.make_btn_return()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_ESCAPE:
+                        function = self.k_escape
+                        function()
+                        break
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if return_btn:
+                        function = self.k_escape
+                        function()
+            pygame.display.flip()
+
+    def show_button(self, btn_num):
+        x, y = pygame.display.get_window_size()
+        x_mouse, y_mouse = pygame.mouse.get_pos()
+        # print(self.buttons[btn_num][0] + 50, y_mouse, self.buttons[btn_num][0])
+        if self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
+            self.screen.blit(self.font.render(self.buttons[btn_num][2], self.buttons[btn_num][4])[0],
+                             (self.buttons[btn_num][0], self.buttons[btn_num][1]))
+        else:
+            self.screen.blit(self.font.render(self.buttons[btn_num][2], self.buttons[btn_num][3])[0],
+                             (self.buttons[btn_num][0], self.buttons[btn_num][1]))
+        if x - 100 >= x_mouse >= x - 120 and self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
+            self.draw_pointer((0, 0, 255), x - 120, self.buttons[btn_num][1]+ 50, 1)
+        else:
+            self.draw_pointer((255, 0, 0), x - 120, self.buttons[btn_num][1] + 50, 1)
+        if x - 240 >= x_mouse > x - 260 and self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
+            self.draw_pointer((255, 0, 0), x - 260, self.buttons[btn_num][1] + 50, 2)
+        else:
+            self.draw_pointer((255, 0, 0), x - 260, self.buttons[btn_num][1] + 50, 2)
+
+
+    def draw_pointer(self, color, x, y, type):
+        if type == 1:
+            pygame.draw.polygon(self.screen, color, ((x, y), (x + 20, y - 25), (x, y - 50)), 5)
+        elif type == 2:
+            pygame.draw.polygon(self.screen, color, ((x, y - 25), (x + 20, y - 50), (x + 20, y)), 5)
 
 
 class Asteroid(pygame.sprite.Sprite):
@@ -661,22 +710,21 @@ class Asteroid(pygame.sprite.Sprite):
             self.rect = self.rect.move(self.vx, self.vy)
 
 
-class StarSystemMap:
-    def __init__(self, screen):
-        self.screen = screen
-        self.font = pygame.freetype.Font("D3Digitalism.ttf", 50)
+class StarSystemMap(Menu):
+    def __init__(self, screen, cycle_name, buttons=[[100, 100, 'exit', (255, 0, 0), (0, 0, 255), sys.exit]],
+                 k_escape_fun=sys.exit):
+        super().__init__(screen, cycle_name, buttons, k_escape_fun)
         self.planets = [[200, 200, 30, 'SEKIRO: SHADOWS DIE TWICE'],
                         [400, 400, 30, 'SECOND SYSTEM'],
                         [500, 700, 30, 'THIRD SYSTEM'],
                         [800, 200, 30, 'FORTH SYSTEM']]
         self.routes = [(0, 1), (1, 2), (1, 3)]
-        self.cycle = 'Star System Map'
         self.new_planet = -1
 
     def show_map(self):
         try:
             global _cycle_
-            while self.cycle == _cycle_:
+            while self.cycle_name == _cycle_:
                 screen.fill((0, 0, 0))
                 route, planet = self.check_routes()
                 self.show_planets(route, planet)
@@ -733,14 +781,6 @@ class StarSystemMap:
                     main_route = (min(i, system_Number), max(i, system_Number))
                     main_planet = i
         return (main_route, main_planet)
-
-    def make_btn_return(self):
-        x, y = pygame.mouse.get_pos()
-        if 25 <= x <= 75 and 25 <= y <= 75:
-            pygame.draw.polygon(self.screen, (0, 0, 255), ((75, 25), (75, 75), (25, 50)))
-            return True
-        pygame.draw.polygon(self.screen, (255, 0, 0), ((75, 25), (75, 75), (25, 50)))
-        return False
 
     def planet_number(self):
         return self.new_planet
@@ -801,11 +841,12 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
-volume = 0
+volume = 100
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
 pygame.mixer.music.set_volume(volume)
+scan_sound.set_volume(volume)
 while running:
     if _cycle_ == "Start Menu":
         menu = Menu(screen, 'Start Menu', buttons=[[100, 100, 'START GAME', (255, 0, 0), (0, 0, 255), start_game],
@@ -845,7 +886,6 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 messages[0].update(pos)
-
         floor_group.draw(screen)
         star_group.draw(screen)
         atmosphere_group.draw(screen)
@@ -870,8 +910,16 @@ while running:
         clock.tick(50)
 
     elif _cycle_ == "Star System Map":
-        star_map = StarSystemMap(screen)
+        star_map = StarSystemMap(screen, 'Star System Map', k_escape_fun=do_nothing)
         star_map.show_map()
+
+    elif _cycle_ == "Settings":
+        menu = SettingsMenu(screen, cycle_name= "Settings", k_escape_fun=return_to_main_menu)
+        menu.show_menu()
+
+    elif _cycle_ == 'paused Settings':
+        menu = SettingsMenu(screen, cycle_name="paused Settings", k_escape_fun=set_pause)
+        menu.show_menu()
 
     else:
         menu = Menu(screen, _cycle_,
