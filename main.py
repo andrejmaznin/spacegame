@@ -173,7 +173,7 @@ def load_image(name, colorkey=None):
 
 def minimap():
     x_f, y_f = floor_group.sprites()[0].rect.x, floor_group.sprites()[0].rect.y
-    x_p, y_p = player.rect.x, player.rect.x
+    x_p, y_p = player.rect.x, player.rect.y
     mini_width = tile_width * 2 // tiles_x
     mini_height = tile_height * 2 // tiles_y
     x, y = int((x_p - x_f)) // tile_width * 4, int((y_p - y_f) // tile_height * 4)
