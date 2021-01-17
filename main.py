@@ -35,22 +35,16 @@ NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
 TEXT_FONT = pygame.freetype.Font("Tomba2Full.ttf", 36)
 tiles_x, tiles_y = 0, 0
 
+MAPS = ['map_0.txt', 'map_1.txt', 'map_2.txt', 'map_3.txt']
+
 
 def restart():
-    global player, level_x, level_y, camera, status, known, paused, start, printed_time, all_sprites, tiles_group, \
-        planet_group, player_group, star_group, floor_group, scan_group, button_group, button_exit, button_restart, \
+    global player, level_x, level_y, camera, status, known, paused, start, printed_time, button_exit, button_restart, \
         button_pause, top_right, bottom_left, asteroid_group, atmosphere_group, _cycle_, system_Number
-    all_sprites = pygame.sprite.Group()
-    tiles_group = pygame.sprite.Group()
-    player_group = pygame.sprite.Group()
-    floor_group = pygame.sprite.Group()
-    star_group = pygame.sprite.Group()
-    planet_group = pygame.sprite.Group()
-    scan_group = pygame.sprite.Group()
-    asteroid_group = pygame.sprite.Group()
-    atmosphere_group = pygame.sprite.Group()
-    generate_map("aaa.txt")
-    player, level_x, level_y = generate_level(load_level('aaa.txt'))
+    new_groups()
+    for el in MAPS:
+        generate_map(el)
+    player, level_x, level_y = generate_level(load_level('map_1.txt'))
     camera = Camera()
     status = Status()
     known = []
@@ -61,6 +55,20 @@ def restart():
     top_right = floor_group.sprites()[0]
     _cycle_ = 'Main Cycle'
     system_Number = 1
+
+
+def new_groups():
+    global all_sprites, tiles_group, player_group, floor_group, star_group, planet_group, \
+        scan_group, atmosphere_group, asteroid_group
+    all_sprites = pygame.sprite.Group()
+    tiles_group = pygame.sprite.Group()
+    player_group = pygame.sprite.Group()
+    floor_group = pygame.sprite.Group()
+    star_group = pygame.sprite.Group()
+    planet_group = pygame.sprite.Group()
+    scan_group = pygame.sprite.Group()
+    atmosphere_group = pygame.sprite.Group()
+    asteroid_group = pygame.sprite.Group()
 
 
 def load_level(filename):
@@ -85,8 +93,8 @@ def save(filename):
         level_map = "".join(["".join(i) + "\n" for i in level_map])
         mapFile.close()
     with open(filename, 'w') as mapFile:
-        print(level_map)
-        print(type(level_map))
+        # print(level_map)
+        # print(type(level_map))
         mapFile.write(level_map)
         mapFile.close()
 
@@ -197,8 +205,8 @@ def show_settings():
 
 
 def return_to_main_menu():
-    global _cycle_
-    save('aaa.txt')
+    global _cycle_, MAPS, system_Number
+    save(MAPS[system_Number])
     _cycle_ = 'Start Menu'
 
 
@@ -227,8 +235,15 @@ def set_pause():
 
 
 def change_star_system():
-    global system_Number, _cycle_
+    global system_Number, _cycle_, player, level_x, level_y, MAPS, camera, status, bottom_left, top_right
+    new_groups()
+    save(MAPS[system_Number])
     system_Number = star_map.planet_number()
+    player, level_x, level_y = generate_level(load_level(MAPS[system_Number]))
+    camera = Camera()
+    status = Status()
+    bottom_left = floor_group.sprites()[-1]
+    top_right = floor_group.sprites()[0]
     _cycle_ = 'Main Cycle'
 
 
@@ -753,6 +768,7 @@ def ask_restart():
 
 
 _cycle_ = "Start Menu"
+system_Number = 1
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -771,8 +787,7 @@ tile_images = {"sun": load_image("sun.png"),
                'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png"),
                "atmosphere": [load_image("atmosphere.png"), load_image("atmosphere2.png"),
                               load_image("atmosphere3.png")]}
-generate_map("aaa.txt")
-player, level_x, level_y = generate_level(load_level('aaa.txt'))
+player, level_x, level_y = generate_level(load_level(MAPS[system_Number]))
 camera = Camera()
 status = Status()
 bottom_left = floor_group.sprites()[-1]
@@ -786,9 +801,7 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
-save("aaa.txt")
 volume = 0
-system_Number = 1
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
