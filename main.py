@@ -72,24 +72,27 @@ def new_groups():
 
 
 def load_level(filename):
-    # ������ �������, ������ ������� �������� ������
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
 
-    # � ������������ ������������ �����
     max_width = max(map(len, level_map))
 
-    # ��������� ������ ������ ������� �������� ('.')
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
 def save(filename):
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-        level_map.insert(0, "system_name")
-        level_map.insert(0, str(len(known)))
-        level_map.insert(0, str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height))
-        level_map.insert(0, "saved")
+        if level_map[0] == "saved":
+            level_map[0] = "saved"
+            level_map[1] = str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height)
+            level_map[2] = str(len(known))
+            level_map[3] = "system_name"
+        else:
+            level_map.insert(0, "system_name")
+            level_map.insert(0, str(len(known)))
+            level_map.insert(0, str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height))
+            level_map.insert(0, "saved")
         level_map = "".join(["".join(i) + "\n" for i in level_map])
         mapFile.close()
     with open(filename, 'w') as mapFile:
@@ -137,13 +140,17 @@ def generate_map(filename):
 def generate_level(level):
     global tiles_x, tiles_y, known
     if level[0] == "saved":
+        rng = range(4, len(level))
         new_player = Player(*list(map(int, level[1].split())))
         known = int(level[2])
     else:
         new_player, x, y = None, None, None
-    tiles_y = len(level)
+        rng = range(len(level))
+    tiles_y = len(rng)
+    print(tiles_y)
     tiles_x = len(level[0])
-    for y in range(len(level)):
+
+    for y in rng:
         for x in range(len(level[y])):
             if level[y][x] == 'S':
                 Floor(x, y)
@@ -181,6 +188,7 @@ def load_image(name, colorkey=None):
 
 def minimap():
     x_f, y_f = floor_group.sprites()[0].rect.x, floor_group.sprites()[0].rect.y
+    print()
     x_p, y_p = player.rect.x, player.rect.y
     mini_width = tile_width * 2 // tiles_x
     mini_height = tile_height * 2 // tiles_y
@@ -635,14 +643,13 @@ class SettingsMenu(Menu):
             self.screen.blit(self.font.render(self.buttons[btn_num][2], self.buttons[btn_num][3])[0],
                              (self.buttons[btn_num][0], self.buttons[btn_num][1]))
         if x - 100 >= x_mouse >= x - 120 and self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
-            self.draw_pointer((0, 0, 255), x - 120, self.buttons[btn_num][1]+ 50, 1)
+            self.draw_pointer((0, 0, 255), x - 120, self.buttons[btn_num][1] + 50, 1)
         else:
             self.draw_pointer((255, 0, 0), x - 120, self.buttons[btn_num][1] + 50, 1)
         if x - 240 >= x_mouse > x - 260 and self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
             self.draw_pointer((255, 0, 0), x - 260, self.buttons[btn_num][1] + 50, 2)
         else:
             self.draw_pointer((255, 0, 0), x - 260, self.buttons[btn_num][1] + 50, 2)
-
 
     def draw_pointer(self, color, x, y, type):
         if type == 1:
@@ -841,7 +848,7 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
-volume = 100
+volume = 0
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
@@ -914,7 +921,7 @@ while running:
         star_map.show_map()
 
     elif _cycle_ == "Settings":
-        menu = SettingsMenu(screen, cycle_name= "Settings", k_escape_fun=return_to_main_menu)
+        menu = SettingsMenu(screen, cycle_name="Settings", k_escape_fun=return_to_main_menu)
         menu.show_menu()
 
     elif _cycle_ == 'paused Settings':
