@@ -76,8 +76,10 @@ def load_level(filename):
         level_map = [line.strip() for line in mapFile]
 
     max_width = max(map(len, level_map))
-
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+    if "saved" in level_map[0].lower():
+        return level_map[4:] + list(map(lambda x: x.ljust(max_width, '.'), level_map[4:]))
+    else:
+        return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
 def save(filename):
@@ -139,7 +141,7 @@ def generate_map(filename):
 
 def generate_level(level):
     global tiles_x, tiles_y, known
-    if level[0] == "saved":
+    if "saved" in level[0].lower():
         rng = range(4, len(level))
         new_player = Player(*list(map(int, level[1].split())))
         known = int(level[2])
@@ -149,7 +151,7 @@ def generate_level(level):
     tiles_y = len(rng)
     print(tiles_y)
     tiles_x = len(level[0])
-
+    print(len(level[0]))
     for y in rng:
         for x in range(len(level[y])):
             if level[y][x] == 'S':
@@ -188,18 +190,15 @@ def load_image(name, colorkey=None):
 
 def minimap():
     x_f, y_f = floor_group.sprites()[0].rect.x, floor_group.sprites()[0].rect.y
-    print()
     x_p, y_p = player.rect.x, player.rect.y
     mini_width = tile_width * 2 // tiles_x
     mini_height = tile_height * 2 // tiles_y
-    x, y = int((x_p - x_f)) // tile_width * 4, int((y_p - y_f) // tile_height * 4)
-    pygame.draw.rect(screen, (0, 0, 0),
-                     (0, height - tile_height * 2, tile_width * 2, tile_height * 2))
-    pygame.draw.rect(screen, (255, 255, 255),
-                     (0, height - tile_height * 2 - 2, tile_width * 2, tile_height * 2), 2)
+    sc = pygame.surface.Surface((200, 200))
+    x, y = abs((x_f - x_p) // 100), abs((y_f - y_p) // 100)
     if pygame.sprite.spritecollideany(player, floor_group):
-        pygame.draw.rect(screen, (255, 255, 255),
-                         (x, height - tile_height * 2 + y, 10, 10))
+        pygame.draw.rect(sc, (255, 255, 255), (x * 4, y * 4, 4, 4))
+    pygame.draw.rect(sc, (255, 255, 255), (0, 0, 200, 200), 1)
+    screen.blit(sc, (0, height - 200))
 
 
 def start_game():
