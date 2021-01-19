@@ -103,6 +103,18 @@ def save(filename):
         mapFile.write(level_map)
         mapFile.close()
 
+    # сохранение настроек
+    with open('info.txt', 'w') as infoFile:
+        global volume
+        print(str(volume), file=infoFile)
+
+
+def load_settings():
+    with open('info.txt', 'r') as infoFile:
+        global volume
+        settings = infoFile.read().strip().split('\n')
+        volume = float(settings[0])
+
 
 def generate_map(filename):
     try:
@@ -149,9 +161,9 @@ def generate_level(level):
         new_player, x, y = None, None, None
         rng = range(len(level))
     tiles_y = len(rng)
-    print(tiles_y)
+    # print(tiles_y)
     tiles_x = len(level[0])
-    print(len(level[0]))
+    # print(len(level[0]))
     for y in rng:
         for x in range(len(level[y])):
             if level[y][x] == 'S':
@@ -175,7 +187,7 @@ def generate_level(level):
 def load_image(name, colorkey=None):
     # ���� ���� �� ����������, �� �������
     if not os.path.isfile(name):
-        print(f"���� � ������������ '{name}' �� ������")
+        # print(f"���� � ������������ '{name}' �� ������")
         sys.exit()
     image = pygame.image.load(name)
     if colorkey is not None:
@@ -207,7 +219,11 @@ def start_game():
 
 
 def show_settings():
-    global _cycle_
+    global _cycle_, menu
+    if _cycle_ == "Start Menu":
+        menu = SettingsMenu(screen, cycle_name="Settings", k_escape_fun=return_to_main_menu)
+    elif _cycle_ == "Pause":
+        menu = SettingsMenu(screen, cycle_name="Settings", k_escape_fun=set_pause)
     _cycle_ = 'Settings'
 
 
@@ -231,9 +247,18 @@ def do_nothing():
     pass
 
 
-def change_volume(new):
+def decrease_vol():
+    global volume, scan_sound
+    volume = (volume - 0.01) % 1
+    pygame.mixer.music.set_volume(volume)
+    scan_sound.set_volume(volume)
+
+
+def increase_vol():
     global volume
-    volume = new
+    volume = (volume + 0.01) % 1
+    pygame.mixer.music.set_volume(volume)
+    scan_sound.set_volume(volume)
 
 
 def set_pause():
@@ -605,18 +630,18 @@ class Menu:
 
 class SettingsMenu(Menu):
     def __init__(self, screen, cycle_name='Settings',
-                 buttons=[[100, 100, 'VOLUME', (255, 0, 0), (255, 0, 255), change_volume, (0, 100)]],
+                 buttons=[[100, 100, 'VOLUME', (255, 0, 0), (255, 0, 255), decrease_vol, increase_vol, (0, 100)]],
                  k_escape_fun=set_pause):
         super().__init__(screen, cycle_name, buttons, k_escape_fun)
-        print(2)
 
     def show_menu(self):
         global _cycle_
         while self.cycle_name == _cycle_:
             self.screen.fill((0, 0, 0))
+            return_btn = self.make_btn_return()
             for i in range(len(self.buttons)):
                 self.show_button(i)
-            return_btn = self.make_btn_return()
+            btn_num, side = self.check_button()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
@@ -629,26 +654,49 @@ class SettingsMenu(Menu):
                     if return_btn:
                         function = self.k_escape
                         function()
+                    if side == 1:
+                        function = self.buttons[btn_num][5]
+                        function()
+                    if side == 2:
+                        function = self.buttons[btn_num][6]
+                        function()
+
             pygame.display.flip()
 
     def show_button(self, btn_num):
         x, y = pygame.display.get_window_size()
         x_mouse, y_mouse = pygame.mouse.get_pos()
-        # print(self.buttons[btn_num][0] + 50, y_mouse, self.buttons[btn_num][0])
         if self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
             self.screen.blit(self.font.render(self.buttons[btn_num][2], self.buttons[btn_num][4])[0],
                              (self.buttons[btn_num][0], self.buttons[btn_num][1]))
+            self.screen.blit(self.font.render(str(int(volume * 100)), self.buttons[btn_num][4])[0],
+                             (x - 233, self.buttons[btn_num][1] + 10))
+            if x - 100 >= x_mouse >= x - 120:
+                self.draw_pointer((0, 0, 255), x - 120, self.buttons[btn_num][1] + 50, 1)
+            else:
+                self.draw_pointer((255, 0, 255), x - 120, self.buttons[btn_num][1] + 50, 1)
+            if x - 240 >= x_mouse > x - 260:
+                self.draw_pointer((0, 0, 255), x - 260, self.buttons[btn_num][1] + 50, 2)
+            else:
+                self.draw_pointer((255, 0, 255), x - 260, self.buttons[btn_num][1] + 50, 2)
         else:
             self.screen.blit(self.font.render(self.buttons[btn_num][2], self.buttons[btn_num][3])[0],
                              (self.buttons[btn_num][0], self.buttons[btn_num][1]))
-        if x - 100 >= x_mouse >= x - 120 and self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
-            self.draw_pointer((0, 0, 255), x - 120, self.buttons[btn_num][1] + 50, 1)
-        else:
             self.draw_pointer((255, 0, 0), x - 120, self.buttons[btn_num][1] + 50, 1)
-        if x - 240 >= x_mouse > x - 260 and self.buttons[btn_num][1] + 50 >= y_mouse >= self.buttons[btn_num][1]:
+            self.screen.blit(self.font.render(str(int(volume * 100)), self.buttons[btn_num][3])[0],
+                             (x - 233, self.buttons[btn_num][1] + 10))
             self.draw_pointer((255, 0, 0), x - 260, self.buttons[btn_num][1] + 50, 2)
-        else:
-            self.draw_pointer((255, 0, 0), x - 260, self.buttons[btn_num][1] + 50, 2)
+
+    def check_button(self):
+        x, y = pygame.display.get_window_size()
+        x_mouse, y_mouse = pygame.mouse.get_pos()
+        btn, side = -1, -1
+        for i in range(len(self.buttons)):
+            if self.buttons[i][1] + 50 >= y_mouse >= self.buttons[i][1] and x - 240 >= x_mouse > x - 260:
+                btn, side = i, 1
+            elif self.buttons[i][1] + 50 >= y_mouse >= self.buttons[i][1] and x - 100 >= x_mouse >= x - 120:
+                btn, side = i, 2
+        return (btn, side)
 
     def draw_pointer(self, color, x, y, type):
         if type == 1:
@@ -705,7 +753,6 @@ class Asteroid(pygame.sprite.Sprite):
                         if (self.center[1] - i.center[1]) * self.vy < 0:
                             self.vy = -self.vy
             if pygame.sprite.spritecollideany(self, player_group):
-                print(1)
                 x = player.vx
                 y = player.vy
                 self.vx = self.vx + int(x * 0.5) if abs(self.vx <= V) else self.vx
@@ -720,10 +767,10 @@ class StarSystemMap(Menu):
     def __init__(self, screen, cycle_name, buttons=[[100, 100, 'exit', (255, 0, 0), (0, 0, 255), sys.exit]],
                  k_escape_fun=sys.exit):
         super().__init__(screen, cycle_name, buttons, k_escape_fun)
-        self.planets = [[200, 200, 30, 'SEKIRO: SHADOWS DIE TWICE'],
-                        [400, 400, 30, 'SECOND SYSTEM'],
-                        [500, 700, 30, 'THIRD SYSTEM'],
-                        [800, 200, 30, 'FORTH SYSTEM']]
+        self.planets = [[200, 200, 30, 'PYTHAGORAS'],
+                        [400, 400, 30, 'DEMOCRITUS'],
+                        [500, 700, 30, 'SOCRATES'],
+                        [800, 200, 30, 'ARISTOTLE']]
         self.routes = [(0, 1), (1, 2), (1, 3)]
         self.new_planet = -1
 
@@ -847,10 +894,11 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
-volume = 0
+volume = 1
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
+load_settings()
 pygame.mixer.music.set_volume(volume)
 scan_sound.set_volume(volume)
 while running:
@@ -920,11 +968,6 @@ while running:
         star_map.show_map()
 
     elif _cycle_ == "Settings":
-        menu = SettingsMenu(screen, cycle_name="Settings", k_escape_fun=return_to_main_menu)
-        menu.show_menu()
-
-    elif _cycle_ == 'paused Settings':
-        menu = SettingsMenu(screen, cycle_name="paused Settings", k_escape_fun=set_pause)
         menu.show_menu()
 
     else:
