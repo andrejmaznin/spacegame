@@ -814,6 +814,7 @@ class StarSystemMap(Menu):
             if i == system_Number:
                 pygame.draw.circle(self.screen, (255, 255, 255), (self.planets[i][0], self.planets[i][1]),
                                    self.planets[i][2])
+                self.screen.blit(self.font.render(self.planets[i][3], (255, 255, 255))[0], (270, 70))
             elif i == planet:
                 self.screen.blit(self.font.render(self.planets[i][3], (255, 0, 0))[0], (700, 400))
                 pygame.draw.circle(self.screen, (0, 0, 255), (self.planets[i][0], self.planets[i][1]),
