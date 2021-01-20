@@ -39,14 +39,15 @@ MAPS = ['map_0.txt', 'map_1.txt', 'map_2.txt', 'map_3.txt']
 
 def restart():
     global player, level_x, level_y, camera, status, known, paused, start, printed_time, button_exit, button_restart, \
-        button_pause, top_right, bottom_left, asteroid_group, atmosphere_group, _cycle_, system_Number
+        button_pause, top_right, bottom_left, asteroid_group, atmosphere_group, _cycle_, system_Number, planets
     new_groups()
+    planets = {}
+    known = 0
     for el in MAPS:
         generate_map(el)
     player, level_x, level_y = generate_level(load_level('map_1.txt'))
     camera = Camera()
     status = Status()
-    known = 0
     paused = False
     start = time.time()
     printed_time = False
@@ -73,12 +74,34 @@ def new_groups():
 def load_level(filename):
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
+    print(level_map)
+    if "saved_planets" in level_map[0].lower():
+        max_width = max(map(len, level_map[2:]))
 
-    max_width = max(map(len, level_map[5:]))
-    if "saved" in level_map[0].lower():
+        return level_map[:2] + list(map(lambda x: x.ljust(max_width, '.'), level_map[2:]))
+    elif level_map[0].lower() == "saved":
+        max_width = max(map(len, level_map[5:]))
         return level_map[:5] + list(map(lambda x: x.ljust(max_width, '.'), level_map[5:]))
     else:
+        max_width = max(map(len, level_map))
         return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+
+def save_planets(filename):
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+        if "saved" in level_map[0].lower():
+            level_map[0] = "saved_planets"
+            level_map[1] = str(planets)
+        else:
+            level_map.insert(0, str(planets))
+            level_map.insert(0, "saved_planets")
+    level_map = "".join(["".join(i) + "\n" for i in level_map])
+    with open(filename, 'w') as mapFile:
+        # print(level_map)
+        # print(type(level_map))
+        mapFile.write(level_map)
+        mapFile.close()
 
 
 def save(filename):
@@ -158,7 +181,15 @@ def generate_map(filename):
 
 def generate_level(level):
     global tiles_x, tiles_y, known, planets
-    if "saved" in level[0].lower():
+    if "saved_planets" in level[0].lower():
+        lev = level[2:]
+        print("planets")
+        print(lev)
+        print(level)
+        planets = eval(level[1])
+        new = False
+        new_player, x, y = None, None, None
+    elif level[0].lower() == "saved":
         lev = level[5:]
         new_player = Player(*list(map(int, level[1].split())))
         planets = eval(level[4])
@@ -280,8 +311,10 @@ def set_pause():
 
 
 def change_star_system():
-    global system_Number, _cycle_, player, level_x, level_y, MAPS, camera, status, bottom_left, top_right
-    save(MAPS[system_Number])
+    global system_Number, _cycle_, player, level_x, level_y, MAPS, camera, status, bottom_left, top_right, known, planets
+    planets = {}
+    known = 0
+    save_planets(MAPS[system_Number])
     new_groups()
     system_Number = star_map.planet_number()
     player, level_x, level_y = generate_level(load_level(MAPS[system_Number]))
@@ -338,14 +371,16 @@ class Scan(pygame.sprite.Sprite):
 class Planet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, img):
         super().__init__(planet_group, all_sprites)
-        print(img)
-        print(pos_x, pos_y)
+
         self.image = tile_images["planet"][img]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
         self.center = (self.rect.x + tile_width, self.rect.y + tile_height)
         self.mask = pygame.mask.from_surface(self.image)
         Atmosphere(pos_x, pos_y, img)
+
+    def update(self):
+        self.center = (self.rect.x + self.rect.size[0] // 2, self.rect.y + self.rect.size[1] // 2)
 
 
 def inertion(cur, min, delta):
@@ -404,7 +439,7 @@ class Status:
                 x, y = a[0].x, a[0].y
                 if planets[f"{x}, {y}"][1] == "unknown":
                     known += 1
-                planets[f"{x}, {y}"][1] = "known"
+                    planets[f"{x}, {y}"][1] = "known"
 
                 self.to_blit["success"] = [STATUS_FONT.render("SUCCESS", fgcolor=pygame.Color("red"))[0],
                                            (width // 2 - self.to_blit["success"][0].get_size()[0] // 2, 200)]
@@ -530,9 +565,10 @@ class Player(pygame.sprite.Sprite):
 
                 for i in b:
                     if pygame.sprite.collide_mask(self, i):
-
+                        print(self.center[0], i.center[0])
                         if (self.center[0] - i.center[0]) * self.vx < 0:
                             self.vx = -self.vx
+                            print(1)
                         if (self.center[1] - i.center[1]) * self.vy < 0:
                             self.vy = -self.vy
             self.image = self.frames[self.cur_frame]
@@ -769,8 +805,8 @@ class Asteroid(pygame.sprite.Sprite):
             if pygame.sprite.spritecollideany(self, atmosphere_group):
                 a = pygame.sprite.spritecollide(self, atmosphere_group, False)
                 if pygame.sprite.collide_mask(a[0], player):
-                    vx = inertion(player.vx, 0, 0.5) if self.vx else 0
-                    vy = inertion(player.vx, 0, 0.5) if self.vy else 0
+                    vx = inertion(self.vx, 0, 1) if self.vx else 0
+                    vy = inertion(self.vy, 0, 0.5) if self.vy else 0
                     self.vx, self.vy = vx, vy
             if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
                 a = pygame.sprite.spritecollide(self, star_group, False)
@@ -794,6 +830,7 @@ class Asteroid(pygame.sprite.Sprite):
                 self.vy = self.vy + int(y * 0.5) if abs(self.vy <= V) else self.vy
                 player.vx = int(x * 0.3)
                 player.vy = int(y * 0.3)
+
             self.image = self.frames[self.cur_frame]
             self.rect = self.rect.move(self.vx, self.vy)
 
@@ -939,6 +976,9 @@ pygame.mixer.music.play()
 load_settings()
 pygame.mixer.music.set_volume(volume)
 scan_sound.set_volume(volume)
+end = 0
+for i in range(3):
+    pygame.mixer.music.queue("moon.mp3")
 while running:
     if _cycle_ == "Start Menu":
         menu = Menu(screen, 'Start Menu', buttons=[[100, 100, 'START GAME', (255, 0, 0), (0, 0, 255), start_game],
@@ -964,10 +1004,11 @@ while running:
             t1 = 0
         key = pygame.key.get_pressed()
         screen.fill((5, 5, 5))
-        player_group.update(key)
         camera.update(player)
         for sprite in all_sprites:
             camera.apply(sprite)
+        planet_group.update()
+        player_group.update(key)
         for event in pygame.event.get():
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_ESCAPE:
@@ -993,12 +1034,18 @@ while running:
         if show_text:
             screen.blit(messages[0].surface, (400, 400))
         screen.blit(*status.to_blit["num_known"])
-        if known == len(planet_group.sprites()):
+        if len(planet_group.sprites()) == known:
+            if not printed_time:
+                end = time.time()
+            time_final = NUM_FONT.render(str(round(end - start + (t1 - t), 2)), fgcolor=pygame.Color("red"))[0]
+            screen.blit(time_final, (width // 2 - time_final.get_size()[0] // 2, 50))
             printed_time = True
+
         minimap()
         pygame.display.flip()
         if key[pygame.K_SPACE] and not paused:
             scan_channel = scan_sound.play(0)
+
         clock.tick(50)
 
     elif _cycle_ == "Star System Map":
