@@ -40,7 +40,7 @@ MAPS = ['map_0.txt', 'map_1.txt', 'map_2.txt', 'map_3.txt']
 
 def restart():
     global player, level_x, level_y, camera, status, known, paused, start, printed_time, button_exit, button_restart, \
-        button_pause, top_right, bottom_left, asteroid_group, atmosphere_group, _cycle_, system_Number
+        button_pause, bottom_left, top_right, asteroid_group, atmosphere_group, _cycle_, system_Number
     new_groups()
     for el in MAPS:
         generate_map(el)
@@ -51,8 +51,8 @@ def restart():
     paused = False
     start = time.time()
     printed_time = False
-    bottom_left = floor_group.sprites()[-1]
-    top_right = floor_group.sprites()[0]
+    top_right = floor_group.sprites()[-1]
+    bottom_left = floor_group.sprites()[0]
     _cycle_ = 'Main Cycle'
     system_Number = 1
 
@@ -267,15 +267,15 @@ def set_pause():
 
 
 def change_star_system():
-    global system_Number, _cycle_, player, level_x, level_y, MAPS, camera, status, bottom_left, top_right
+    global system_Number, _cycle_, player, level_x, level_y, MAPS, camera, status, top_right, bottom_left
     new_groups()
     save(MAPS[system_Number])
     system_Number = star_map.planet_number()
     player, level_x, level_y = generate_level(load_level(MAPS[system_Number]))
     camera = Camera()
     status = Status()
-    bottom_left = floor_group.sprites()[-1]
-    top_right = floor_group.sprites()[0]
+    top_right = floor_group.sprites()[-1]
+    bottom_left = floor_group.sprites()[0]
     _cycle_ = 'Main Cycle'
 
 
@@ -400,9 +400,9 @@ class Camera:
 
     def apply(self, obj):
         if not paused:
-            if bottom_left.rect.y - player.rect.y >= height // 2 <= player.rect.y - top_right.rect.y:
+            if top_right.rect.y - player.rect.y >= height // 2 <= player.rect.y - bottom_left.rect.y:
                 obj.rect.y += self.dy
-            if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
+            if top_right.rect.x - player.rect.x >= width // 2 <= player.rect.x - bottom_left.rect.x:
                 obj.rect.x += self.dx
         obj.center = (obj.rect.x + tile_width, obj.rect.y + tile_height)
 
@@ -884,8 +884,8 @@ tile_images = {"sun": load_image("sun.png"),
 player, level_x, level_y = generate_level(load_level(MAPS[system_Number]))
 camera = Camera()
 status = Status()
-bottom_left = floor_group.sprites()[-1]
 top_right = floor_group.sprites()[0]
+bottom_left = floor_group.sprites()[-1]
 messages = []
 messages.append(Message("text.txt"))
 known = []
