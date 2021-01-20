@@ -77,7 +77,7 @@ def load_level(filename):
 
     max_width = max(map(len, level_map))
     if "saved" in level_map[0].lower():
-        return level_map[:4] + list(map(lambda x: x.ljust(max_width, '.'), level_map[4:]))
+        return level_map[4:] + list(map(lambda x: x.ljust(max_width, '.'), level_map[4:]))
     else:
         return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
