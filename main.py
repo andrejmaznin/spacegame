@@ -85,15 +85,15 @@ def load_level(filename):
 def save(filename):
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-        if level_map[0] == "saved":
+        if "saved" in level_map[0].lower():
             level_map[0] = "saved"
-            level_map[1] = str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height)
+            level_map[1] = "23 23"
             level_map[2] = str(len(known))
             level_map[3] = "system_name"
         else:
             level_map.insert(0, "system_name")
             level_map.insert(0, str(len(known)))
-            level_map.insert(0, str(player.rect.x // tile_width) + " " + str(player.rect.y // tile_height))
+            level_map.insert(0, "23 23")
             level_map.insert(0, "saved")
         level_map = "".join(["".join(i) + "\n" for i in level_map])
         mapFile.close()
@@ -154,33 +154,34 @@ def generate_map(filename):
 def generate_level(level):
     global tiles_x, tiles_y, known
     if "saved" in level[0].lower():
-        rng = range(4, len(level))
+        lev = level[4:]
         new_player = Player(*list(map(int, level[1].split())))
         known = int(level[2])
     else:
         new_player, x, y = None, None, None
-        rng = range(len(level))
-    tiles_y = len(rng)
+        lev = level.copy()
+    tiles_y = len(lev)
     # print(tiles_y)
     tiles_x = len(level[0])
     # print(len(level[0]))
-    for y in rng:
-        for x in range(len(level[y])):
-            if level[y][x] == 'S':
+    for y in range(50):
+        for x in range(len(lev[y])):
+            if lev[y][x] == 'S':
                 Floor(x, y)
                 Star(x, y)
-            elif level[y][x] == ".":
+            elif lev[y][x] == ".":
                 Floor(x, y)
-            elif level[y][x] == 'P':
+            elif lev[y][x] == 'P':
                 Floor(x, y)
                 Planet(x, y)
-            elif level[y][x] == 'A':
+            elif lev[y][x] == 'A':
                 Floor(x, y)
                 Asteroid(x, y)
-            elif level[y][x] == '@':
+            elif lev[y][x] == '@':
                 Floor(x, y)
                 if not new_player:
                     new_player = Player(x, y)
+    print(x, y)
     return new_player, x, y
 
 
@@ -394,22 +395,36 @@ class Status:
 
 
 class Camera:
+    # зададим начальный сдвиг камеры
     def __init__(self):
-        self.dx = width // 2
-        self.dy = height // 2
+        self.dx = 0
+        self.dy = 0
 
+    # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
-        if not paused:
-            if bottom_left.rect.y - player.rect.y >= height // 2 <= player.rect.y - top_right.rect.y:
-                obj.rect.y += self.dy
-            if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
-                obj.rect.x += self.dx
-        obj.center = (obj.rect.x + tile_width, obj.rect.y + tile_height)
+        # if bottom_left.rect.y - player.rect.y >= height // 2 <= player.rect.y - top_right.rect.y:
+        if not self.stop_y:
+            obj.rect.y += self.dy
 
+        # if bottom_left.rect.x - player.rect.x >= width // 2 <= player.rect.x - top_right.rect.x:
+        if not self.stop_x:
+            obj.rect.x += self.dx
+
+    # позиционировать камеру на объекте target
     def update(self, target):
-        if not paused:
+        if player.rect.x - top_right.rect.x > width // 2 < bottom_left.rect.x - player.rect.x:
             self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+            self.stop_x = False
+        else:
+            self.stop_x = True
+        if player.rect.y - top_right.rect.y > height // 2 < bottom_left.rect.y - player.rect.y:
             self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+            self.stop_y = False
+        else:
+            self.stop_y = True
+
+        # self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+        # self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
 
 
 class Player(pygame.sprite.Sprite):
