@@ -83,17 +83,20 @@ def load_level(filename):
 
 
 def save(filename):
+    x_f, y_f = floor_group.sprites()[0].rect.x, floor_group.sprites()[0].rect.y
+    x_p, y_p = player.rect.x, player.rect.y
+    x, y = abs((x_f - x_p) // tile_width), abs((y_f - y_p) // tile_height)
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
         if "saved" in level_map[0].lower():
             level_map[0] = "saved"
-            level_map[1] = "23 23"
+            level_map[1] = str(x) + " " + str(y)
             level_map[2] = str(len(known))
             level_map[3] = "system_name"
         else:
             level_map.insert(0, "system_name")
             level_map.insert(0, str(len(known)))
-            level_map.insert(0, "23 23")
+            level_map.insert(0, str(x) + " " + str(y))
             level_map.insert(0, "saved")
         level_map = "".join(["".join(i) + "\n" for i in level_map])
         mapFile.close()
