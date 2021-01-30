@@ -32,6 +32,8 @@ V = 20
 V_45 = 15
 STATUS_FONT = pygame.freetype.Font("D3Digitalism.ttf", 24)
 NUM_FONT = pygame.freetype.Font("D3Digitalism.ttf", 36)
+BIG_FONT = pygame.freetype.Font("D3Digitalism.ttf", 46)
+
 TEXT_FONT = pygame.freetype.Font("Tomba2Full.ttf", 36)
 tiles_x, tiles_y = 0, 0
 MAPS = ['map_0.txt', 'map_1.txt', 'map_2.txt', 'map_3.txt']
@@ -45,7 +47,7 @@ def restart():
     known = 0
     for el in MAPS:
         generate_map(el)
-    player, level_x, level_y = generate_level(load_level('map_1.txt'))
+    player, level_x, level_y = generate_level(load_level("maps/" + 'map_1.txt'))
     camera = Camera()
     status = Status()
     paused = False
@@ -60,6 +62,7 @@ def restart():
 def new_groups():
     global all_sprites, tiles_group, player_group, floor_group, star_group, planet_group, \
         scan_group, atmosphere_group, asteroid_group
+
     all_sprites = pygame.sprite.Group()
     tiles_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
@@ -74,29 +77,73 @@ def new_groups():
 def load_level(filename):
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-    print(level_map)
     if "saved_planets" in level_map[0].lower():
         max_width = max(map(len, level_map[2:]))
 
         return level_map[:2] + list(map(lambda x: x.ljust(max_width, '.'), level_map[2:]))
     elif level_map[0].lower() == "saved":
-        max_width = max(map(len, level_map[5:]))
-        return level_map[:5] + list(map(lambda x: x.ljust(max_width, '.'), level_map[5:]))
+        max_width = max(map(len, level_map[1:]))
+        return level_map[:1] + list(map(lambda x: x.ljust(max_width, '.'), level_map[1:]))
+
     else:
         max_width = max(map(len, level_map))
         return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
+def clear():
+    for filename in MAPS:
+        with open("maps/" + filename, 'r') as mapFile:
+            level_map = [line.strip() for line in mapFile]
+            if level_map[0] == "saved":
+                level_map = level_map[1:]
+
+        level_map = "".join(["".join(i) + "\n" for i in level_map])
+
+        with open("maps/" + filename, 'w') as mapFile:
+            # print(level_map)
+            # print(type(level_map))
+            mapFile.write(level_map)
+            mapFile.close()
+
+
 def save_planets(filename):
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
+
         if "saved" in level_map[0].lower():
             level_map[0] = "saved_planets"
             level_map[1] = str(planets)
+
+            if systems[cur_system]:
+                level_map[2] = f"{start} {end}"
+
+            else:
+                level_map[2] = f"-1 -1"
         else:
+            if systems[cur_system]:
+                level_map.insert(0, f"{start} {end}")
+
+            else:
+                level_map.insert(0, f"-1 -1")
             level_map.insert(0, str(planets))
             level_map.insert(0, "saved_planets")
+
     level_map = "".join(["".join(i) + "\n" for i in level_map])
+    with open(filename, 'w') as mapFile:
+        # print(level_map)
+        # print(type(level_map))
+        mapFile.write(level_map)
+        mapFile.close()
+
+
+def save_done(filename):
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+        if "saved" not in level_map[0].lower():
+            level_map.insert(0, "saved")
+
+    level_map = "".join(["".join(i) + "\n" for i in level_map])
+
     with open(filename, 'w') as mapFile:
         # print(level_map)
         # print(type(level_map))
@@ -107,15 +154,17 @@ def save_planets(filename):
 def save(filename):
     x_f, y_f = floor_group.sprites()[0].rect.x, floor_group.sprites()[0].rect.y
     x_p, y_p = player.rect.x, player.rect.y
-    x, y = abs((x_f - x_p) // tile_width), abs((y_f - y_p) // tile_height)
+    x, y = abs(x_f - x_p), abs(y_f - y_p)
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
+
         if "saved" in level_map[0].lower():
             level_map[0] = "saved"
             level_map[1] = str(x) + " " + str(y)
             level_map[2] = str(known)
             level_map[3] = "system_name"
             level_map[4] = str(planets)
+
         else:
             level_map.insert(0, str(planets))
             level_map.insert(0, "system_name")
@@ -156,6 +205,7 @@ def generate_map(filename):
                     a[y1][x1] = str(random.randint(0, 2))
                     planets.append([x1, y1])
                     break
+
                 else:
                     x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
@@ -168,6 +218,7 @@ def generate_map(filename):
                         a[y1][x1] = str(random.randint(0, 2))
                         planets.append([x1, y1])
                         break
+
                     else:
                         x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
@@ -175,39 +226,51 @@ def generate_map(filename):
             a[22][22] = "A"
             a = "".join(["".join(i) + "\n" for i in a])
             mapFile.write(a)
+
     except Exception:
         print(traceback.format_exc())
 
 
-def generate_level(level):
-    global tiles_x, tiles_y, known, planets
-    if "saved_planets" in level[0].lower():
-        lev = level[2:]
-        print("planets")
-        print(lev)
-        print(level)
-        planets = eval(level[1])
-        new = False
-        new_player, x, y = None, None, None
+def generate_level(level, start=False, name=""):
+    global tiles_x, tiles_y, known, planets, load
+    if not start:
+        if "saved_planets" in level[0].lower():
+            lev = level[2:]
+            planets = eval(level[1])
+            new = False
+            new_player, x, y = None, None, None
+
+        else:
+            new = True
+            new_player, x, y = None, None, None
+            lev = level
+
     elif level[0].lower() == "saved":
-        lev = level[5:]
-        new_player = Player(*list(map(int, level[1].split())))
-        planets = eval(level[4])
+        lev = level[1:]
+        systems[name] = True
         new = False
+        load = True
+        new_player, x, y = None, None, None
+
     else:
         new = True
+        load = False
         new_player, x, y = None, None, None
         lev = level
+
     tiles_y = len(lev)
     tiles_x = len(lev[0])
     p_count = 0
+
     for y in range(50):
         for x in range(len(lev[y])):
             if lev[y][x] == 'S':
                 Floor(x, y)
                 Star(x, y)
+
             elif lev[y][x] == ".":
                 Floor(x, y)
+
             elif lev[y][x].isdigit():
                 Floor(x, y)
                 if new:
@@ -217,14 +280,17 @@ def generate_level(level):
                     if planets[f"{x}, {y}"][1] == "known":
                         known += 1
                 Planet(x, y, int(lev[y][x]))
+
             elif lev[y][x] == 'A':
                 Floor(x, y)
                 Asteroid(x, y)
+
             elif lev[y][x] == '@':
                 Floor(x, y)
+
                 if not new_player:
-                    new_player = Player(x, y)
-    print(x, y)
+                    new_player = Player(tile_width * x, tile_height * y)
+
     return new_player, x, y
 
 
@@ -273,7 +339,6 @@ def show_settings():
 
 def return_to_main_menu():
     global _cycle_, MAPS, system_Number
-    save(MAPS[system_Number])
     _cycle_ = 'Start Menu'
 
 
@@ -311,13 +376,16 @@ def set_pause():
 
 
 def change_star_system():
-    global system_Number, _cycle_, player, level_x, level_y, MAPS, camera, status, bottom_left, top_right, known, planets
-    planets = {}
+    global system_Number, _cycle_, player, level_x, level_y, MAPS, camera, status, bottom_left, top_right, known, planets, t, t1, printed_time, cur_system, start, end
     known = 0
-    save_planets(MAPS[system_Number])
+    save_done(MAPS[system_Number])
+    planets = {}
     new_groups()
+    t, t1, start, end = 0, 0, time.time(), 0
+    printed_time = False
     system_Number = star_map.planet_number()
-    player, level_x, level_y = generate_level(load_level(MAPS[system_Number]))
+    cur_system = MAPS[system_Number]
+    player, level_x, level_y = generate_level(load_level("maps/" + MAPS[system_Number]), name=MAPS[system_Number])
     camera = Camera()
     status = Status()
     bottom_left = floor_group.sprites()[-1]
@@ -371,7 +439,6 @@ class Scan(pygame.sprite.Sprite):
 class Planet(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, img):
         super().__init__(planet_group, all_sprites)
-
         self.image = tile_images["planet"][img]
         self.rect = self.image.get_rect().move(
             tile_width * pos_x, tile_height * pos_y)
@@ -423,13 +490,14 @@ class Star(pygame.sprite.Sprite):
 class Status:
     def __init__(self):
         self.surface, self.rect = STATUS_FONT.render("", (0, 0, 0))
-        print(1)
         self.to_blit = {
             "success": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
-            "num_known": [NUM_FONT.render(str(known), fgcolor=pygame.Color("red"))[0],
-                          (width - 20 - NUM_FONT.render(str(known))[0].get_size()[0], 20)],
-            "restart": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)]}
-        print(self.to_blit)
+            "num_known": [NUM_FONT.render(str(known) + "/" + str(len(planets.keys())), fgcolor=pygame.Color("red"))[0],
+                          (width - 20 - NUM_FONT.render(str(known) + "/" + str(len(planets.keys())))[0].get_size()[0],
+                           20)],
+            "restart": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
+            "explored": [BIG_FONT.render("EXPLORED", fgcolor=pygame.Color("blue"))[0],
+                         (width // 2 - BIG_FONT.render("EXPLORED")[0].get_size()[0] // 2, 120)]}
 
     def update(self, text):
         global known
@@ -443,9 +511,11 @@ class Status:
 
                 self.to_blit["success"] = [STATUS_FONT.render("SUCCESS", fgcolor=pygame.Color("red"))[0],
                                            (width // 2 - self.to_blit["success"][0].get_size()[0] // 2, 200)]
-                self.to_blit["num_known"] = [NUM_FONT.render(str(known), fgcolor=pygame.Color("red"))[0],
-                                             (width - 20 - NUM_FONT.render(str(known))[0].get_size()[0], 20)]
+                self.to_blit["num_known"] = [
+                    NUM_FONT.render(str(known) + "/" + str(len(planets.keys())), fgcolor=pygame.Color("red"))[0],
+                    (width - 20 - NUM_FONT.render(str(known) + "/" + str(len(planets.keys())))[0].get_size()[0], 20)]
                 return True
+
         return False
 
 
@@ -482,6 +552,35 @@ class Camera:
         # self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
 
 
+def move(obj, cur, side):
+    if obj == "player":
+        if side:
+            return cur + DELTA_V if cur + DELTA_V <= V else V
+        return cur - DELTA_V if cur - DELTA_V >= -V else -V
+
+
+def check_frames(keys, default):
+    cur_frame = default
+    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+        cur_frame = 0
+    elif keys[pygame.K_UP] or keys[pygame.K_w]:
+        cur_frame = 3
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+        cur_frame = 1
+    elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+        cur_frame = 2
+    if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
+        cur_frame = 4
+    if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
+        cur_frame = 5
+    if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
+        cur_frame = 7
+    if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
+        cur_frame = 6
+
+    return cur_frame
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, columns=8, rows=1):
         super().__init__(player_group, all_sprites)
@@ -489,7 +588,7 @@ class Player(pygame.sprite.Sprite):
         self.cur_frame = 3
         self.cut_sheet(player_image, columns, rows)
         self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(pos_x * tile_width, pos_y * tile_height)
+        self.rect = self.rect.move(pos_x, pos_y)
         self.center = [self.rect.x + tile_width // 2, self.rect.y + tile_height // 2]
         self.mask = pygame.mask.from_surface(self.image)
         self.vx = 0
@@ -511,48 +610,22 @@ class Player(pygame.sprite.Sprite):
             scan_group = pygame.sprite.Group()
             if keys[pygame.K_DOWN] or keys[pygame.K_UP] or keys[pygame.K_s] or keys[pygame.K_w]:
                 if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                    self.cur_frame = 0
-                    self.vy = self.vy + DELTA_V if self.vy + DELTA_V <= V else V
-                if keys[pygame.K_UP] or keys[pygame.K_w]:
-                    self.cur_frame = 3
-                    self.vy = self.vy - DELTA_V if self.vy - DELTA_V >= -V else -V
+                    side = True
+                elif keys[pygame.K_UP] or keys[pygame.K_w]:
+                    side = False
+                self.vy = move("player", self.vy, side)
             else:
                 self.vy = inertion(self.vy, 0, DELTA_V)
 
             if keys[pygame.K_LEFT] or keys[pygame.K_RIGHT] or keys[pygame.K_a] or keys[pygame.K_d]:
                 if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                    self.cur_frame = 1
-                    self.vx = self.vx - DELTA_V if self.vx - DELTA_V >= -V else -V
-                if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                    self.cur_frame = 2
-                    self.vx = self.vx + DELTA_V if self.vx + DELTA_V <= V else V
+                    side = False
+                elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                    side = True
+                self.vx = move("player", self.vx, side)
             else:
                 self.vx = inertion(self.vx, 0, DELTA_V)
-
-            if keys[pygame.K_RIGHT] and keys[pygame.K_UP] or keys[pygame.K_d] and keys[pygame.K_w]:
-                self.cur_frame = 4
-                # self.vx, self.vy = V_45, -V_45
-                scan_group = pygame.sprite.Group()
-                scan = True
-                # Scan(self.rect.x + tile_height - self.vx, self.rect.y - tile_height + self.vy, 4)
-            if keys[pygame.K_RIGHT] and keys[pygame.K_DOWN] or keys[pygame.K_d] and keys[pygame.K_s]:
-                self.cur_frame = 5
-                # self.vx, self.vy = V_45, V_45
-                scan_group = pygame.sprite.Group()
-                scan = True
-                # Scan(self.rect.x + tile_height - self.vx, self.rect.y + tile_height - self.vy, 5)
-            if keys[pygame.K_LEFT] and keys[pygame.K_UP] or keys[pygame.K_a] and keys[pygame.K_w]:
-                self.cur_frame = 7
-                # self.vx, self.vy = -V_45, -V_45
-                scan_group = pygame.sprite.Group()
-                scan = True
-                # Scan(self.rect.x - tile_height + self.vx, self.rect.y - tile_width + self.vy, 7)
-            if keys[pygame.K_LEFT] and keys[pygame.K_DOWN] or keys[pygame.K_a] and keys[pygame.K_s]:
-                self.cur_frame = 6
-                # self.vx, self.vy = -V_45, V_45
-                scan_group = pygame.sprite.Group()
-                scan = True
-                # Scan(self.rect.x - tile_height - 5, self.rect.y + tile_height + 5, 6)
+            self.cur_frame = check_frames(keys, self.cur_frame)
 
             if pygame.sprite.spritecollideany(self, star_group) or pygame.sprite.spritecollideany(self, planet_group):
                 a = pygame.sprite.spritecollide(self, star_group, False)
@@ -565,10 +638,8 @@ class Player(pygame.sprite.Sprite):
 
                 for i in b:
                     if pygame.sprite.collide_mask(self, i):
-                        print(self.center[0], i.center[0])
                         if (self.center[0] - i.center[0]) * self.vx < 0:
                             self.vx = -self.vx
-                            print(1)
                         if (self.center[1] - i.center[1]) * self.vy < 0:
                             self.vy = -self.vy
             self.image = self.frames[self.cur_frame]
@@ -901,11 +972,12 @@ class StarSystemMap(Menu):
         x, y = pygame.mouse.get_pos()
         main_route = (-1, -1)
         main_planet = -1
-        for i in range(len(self.planets)):
-            if (self.planets[i][0] - x) ** 2 + (self.planets[i][1] - y) ** 2 <= self.planets[i][2] ** 2:
-                if (min(i, system_Number), max(i, system_Number)) in self.routes:
-                    main_route = (min(i, system_Number), max(i, system_Number))
-                    main_planet = i
+        if systems[cur_system]:
+            for i in range(len(self.planets)):
+                if (self.planets[i][0] - x) ** 2 + (self.planets[i][1] - y) ** 2 <= self.planets[i][2] ** 2:
+                    if (min(i, system_Number), max(i, system_Number)) in self.routes:
+                        main_route = (min(i, system_Number), max(i, system_Number))
+                        main_planet = i
         return (main_route, main_planet)
 
     def planet_number(self):
@@ -937,7 +1009,7 @@ _cycle_ = "Start Menu"
 system_Number = 1
 known = 0
 planets = {}
-
+load = False
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
@@ -947,16 +1019,18 @@ planet_group = pygame.sprite.Group()
 scan_group = pygame.sprite.Group()
 atmosphere_group = pygame.sprite.Group()
 asteroid_group = pygame.sprite.Group()
+clear()
 
-player_image = load_image("car2.png")
-tile_images = {"sun": load_image("sun.png"),
-               "planet": [load_image("planet.png"), load_image("planet2.png"),
-                          load_image("planet3.png")],
-               'wall': load_image('obstacle.png'),
-               'empty': load_image('floor.png'), "scan": load_image("scan.png"), "success": load_image("success.png"),
-               "atmosphere": [load_image("atmosphere.png"), load_image("atmosphere2.png"),
-                              load_image("atmosphere3.png")]}
-player, level_x, level_y = generate_level(load_level(MAPS[system_Number]))
+player_image = load_image("images/car2.png")
+tile_images = {"sun": load_image("images/sun.png"),
+               "planet": [load_image("images/planet.png"), load_image("images/planet2.png"),
+                          load_image("images/planet3.png")],
+               'wall': load_image('images/obstacle.png'),
+               'empty': load_image('images/floor.png'), "scan": load_image("images/scan.png"),
+               "success": load_image("images/success.png"),
+               "atmosphere": [load_image("images/atmosphere.png"), load_image("images/atmosphere2.png"),
+                              load_image("images/atmosphere3.png")]}
+player, level_x, level_y = generate_level(load_level("maps/" + MAPS[system_Number]), start=True)
 status = Status()
 camera = Camera()
 bottom_left = floor_group.sprites()[-1]
@@ -977,12 +1051,18 @@ load_settings()
 pygame.mixer.music.set_volume(volume)
 scan_sound.set_volume(volume)
 end = 0
+a = 0.0
+cur_system = MAPS[system_Number]
+systems = {}
+for i in MAPS:
+    systems[i] = False
 for i in range(3):
     pygame.mixer.music.queue("moon.mp3")
+
 while running:
     if _cycle_ == "Start Menu":
-        menu = Menu(screen, 'Start Menu', buttons=[[100, 100, 'START GAME', (255, 0, 0), (0, 0, 255), start_game],
-                                                   [100, 170, 'NEW GAME', (255, 0, 0), (0, 0, 255), ask_restart],
+        menu = Menu(screen, 'Start Menu', buttons=[[100, 100, 'USE DEFAULT MAPS', (255, 0, 0), (0, 0, 255), start_game],
+                                                   [100, 170, 'GENERATE MAPS', (255, 0, 0), (0, 0, 255), ask_restart],
                                                    [100, 240, 'SETTINGS', (255, 0, 0), (0, 0, 255), show_settings],
                                                    [100, 310, 'EXIT', (255, 0, 0), (0, 0, 255), sys.exit]])
         menu.generate_sky()
@@ -1002,6 +1082,7 @@ while running:
         if printed_time:
             t = 0
             t1 = 0
+
         key = pygame.key.get_pressed()
         screen.fill((5, 5, 5))
         camera.update(player)
@@ -1033,14 +1114,26 @@ while running:
             show_text = False
         if show_text:
             screen.blit(messages[0].surface, (400, 400))
-        screen.blit(*status.to_blit["num_known"])
-        if len(planet_group.sprites()) == known:
-            if not printed_time:
-                end = time.time()
-            time_final = NUM_FONT.render(str(round(end - start + (t1 - t), 2)), fgcolor=pygame.Color("red"))[0]
-            screen.blit(time_final, (width // 2 - time_final.get_size()[0] // 2, 50))
-            printed_time = True
+        if len(systems.keys()) == list(systems.values()).count(True):
+            txt = BIG_FONT.render("TOTAL TIME", fgcolor=pygame.Color("red"))[0]
+            time_final = BIG_FONT.render(str(a), fgcolor=pygame.Color("red"))[0]
+            screen.blit(txt, (width // 2 - txt.get_size()[0] // 2, 50))
+            screen.blit(time_final, (width // 2 - time_final.get_size()[0] // 2, 90))
+        else:
+            if len(planet_group.sprites()) == known:
+                if not printed_time:
+                    end = time.time()
+                    final = round(end - start + (t1 - t), 2)
+                    a += final
+                    systems[cur_system] = True
+                time_final = NUM_FONT.render(str(final), fgcolor=pygame.Color("red"))[0]
+                screen.blit(time_final, (width // 2 - time_final.get_size()[0] // 2, 50))
+                printed_time = True
 
+            if systems[cur_system]:
+                screen.blit(*status.to_blit["explored"])
+            else:
+                screen.blit(*status.to_blit["num_known"])
         minimap()
         pygame.display.flip()
         if key[pygame.K_SPACE] and not paused:
