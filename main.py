@@ -46,7 +46,7 @@ def restart():
     planets = {}
     known = 0
     for el in MAPS:
-        generate_map(el)
+        generate_map("maps/" + el)
     player, level_x, level_y = generate_level(load_level("maps/" + 'map_1.txt'))
     camera = Camera()
     status = Status()
@@ -137,6 +137,7 @@ def save_planets(filename):
 
 
 def save_done(filename):
+    filename = "maps/" + filename
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
         if "saved" not in level_map[0].lower():
