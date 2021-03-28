@@ -184,14 +184,15 @@ def save(filename):
     # сохранение настроек
     with open('info.txt', 'w') as infoFile:
         global volume
-        print(str(volume), file=infoFile)
+        # print(str(round(volume, 2)))
+        print(str(round(volume, 2)), file=infoFile)
 
 
 def load_settings():
     with open('info.txt', 'r') as infoFile:
         global volume
         settings = infoFile.read().strip().split('\n')
-        volume = float(settings[0])
+        volume = round(float(settings[0]), 2)
 
 
 def generate_map(filename):
@@ -332,9 +333,9 @@ def start_game():
 def show_settings():
     global _cycle_, menu
     if _cycle_ == "Start Menu":
-        menu = SettingsMenu(screen, cycle_name="Settings", k_escape_fun=return_to_main_menu)
+        SETTINGS_MENU.set_k_escape_function(return_to_main_menu)
     elif _cycle_ == "Pause":
-        menu = SettingsMenu(screen, cycle_name="Settings", k_escape_fun=set_pause)
+        SETTINGS_MENU.set_k_escape_function(set_pause)
     _cycle_ = 'Settings'
 
 
@@ -384,7 +385,7 @@ def change_star_system():
     new_groups()
     t, t1, start, end = 0, 0, time.time(), 0
     printed_time = False
-    system_Number = star_map.planet_number()
+    system_Number = STAR_MAP.planet_number()
     cur_system = MAPS[system_Number]
     player, level_x, level_y = generate_level(load_level("maps/" + MAPS[system_Number]), name=MAPS[system_Number])
     camera = Camera()
@@ -847,6 +848,9 @@ class SettingsMenu(Menu):
         elif type == 2:
             pygame.draw.polygon(self.screen, color, ((x, y - 25), (x + 20, y - 50), (x + 20, y)), 5)
 
+    def set_k_escape_function(self, function):
+        self.k_escape = function
+
 
 class Asteroid(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y, columns=1, rows=1):
@@ -1044,11 +1048,12 @@ printed_time = False
 t = 0
 t1 = 0
 show_text = False
-volume = 1
+volume = 0
 scan_sound = pygame.mixer.Sound("scan.wav")
 pygame.mixer.music.load('moon.mp3')
 pygame.mixer.music.play()
 load_settings()
+print(volume)
 pygame.mixer.music.set_volume(volume)
 scan_sound.set_volume(volume)
 end = 0
@@ -1060,24 +1065,32 @@ for i in MAPS:
 for i in range(3):
     pygame.mixer.music.queue("moon.mp3")
 
+START_MENU = Menu(screen, 'Start Menu', buttons=[[100, 100, 'USE DEFAULT MAPS', (255, 0, 0), (0, 0, 255), start_game],
+                                                 [100, 170, 'GENERATE MAPS', (255, 0, 0), (0, 0, 255), ask_restart],
+                                                 [100, 240, 'SETTINGS', (255, 0, 0), (0, 0, 255), show_settings],
+                                                 [100, 310, 'EXIT', (255, 0, 0), (0, 0, 255), sys.exit]])
+
+PAUSE_MENU = Menu(screen, "Pause", buttons=[[100, 100, "CONTINUE", (0, 100, 0), (0, 0, 255), continue_game],
+                                            [100, 170, "MAIN MENU", (255, 0, 0,), (0, 0, 255), return_to_main_menu],
+                                            [100, 240, "STAR SYSTEMS MAP", (255, 0, 0), (0, 0, 255),
+                                             show_star_system_map],
+                                            [100, 310, "SETTINGS", (255, 0, 0), (0, 0, 255), show_settings]],
+                  k_escape_fun=continue_game)
+STAR_MAP = StarSystemMap(screen, 'Star System Map', k_escape_fun=do_nothing)
+ERROR_SCREEN = Menu(screen, _cycle_,
+                    buttons=[[100, 100, 'UNEXPECTED ERROR', (255, 255, 255), (255, 255, 255), do_nothing],
+                             [100, 170, 'RETURN TO MAIN MENU', (255, 0, 0), (0, 0, 255),
+                              return_to_main_menu]], k_escape_fun=do_nothing)
+SETTINGS_MENU = SettingsMenu(screen)
+START_MENU.generate_sky()
+PAUSE_MENU.generate_sky()
+
 while running:
     if _cycle_ == "Start Menu":
-        menu = Menu(screen, 'Start Menu', buttons=[[100, 100, 'USE DEFAULT MAPS', (255, 0, 0), (0, 0, 255), start_game],
-                                                   [100, 170, 'GENERATE MAPS', (255, 0, 0), (0, 0, 255), ask_restart],
-                                                   [100, 240, 'SETTINGS', (255, 0, 0), (0, 0, 255), show_settings],
-                                                   [100, 310, 'EXIT', (255, 0, 0), (0, 0, 255), sys.exit]])
-        menu.generate_sky()
-        menu.show_menu()
+        START_MENU.show_menu()
 
     elif _cycle_ == "Pause":
-        menu = Menu(screen, "Pause", buttons=[[100, 100, "CONTINUE", (0, 100, 0), (0, 0, 255), continue_game],
-                                              [100, 170, "MAIN MENU", (255, 0, 0,), (0, 0, 255), return_to_main_menu],
-                                              [100, 240, "STAR SYSTEMS MAP", (255, 0, 0), (0, 0, 255),
-                                               show_star_system_map],
-                                              [100, 310, "SETTINGS", (255, 0, 0), (0, 0, 255), show_settings]],
-                    k_escape_fun=continue_game)
-        menu.generate_sky()
-        menu.show_menu()
+        PAUSE_MENU.show_menu()
 
     elif _cycle_ == "Main Cycle":
         if printed_time:
@@ -1143,17 +1156,12 @@ while running:
         clock.tick(50)
 
     elif _cycle_ == "Star System Map":
-        star_map = StarSystemMap(screen, 'Star System Map', k_escape_fun=do_nothing)
-        star_map.show_map()
+        STAR_MAP.show_map()
 
     elif _cycle_ == "Settings":
-        menu.show_menu()
+        SETTINGS_MENU.show_menu()
 
     else:
-        menu = Menu(screen, _cycle_,
-                    buttons=[[100, 100, 'UNEXPECTED ERROR', (255, 255, 255), (255, 255, 255), do_nothing],
-                             [100, 170, 'RETURN TO MAIN MENU', (255, 0, 0), (0, 0, 255),
-                              return_to_main_menu]], k_escape_fun=do_nothing)
-        menu.show_menu()
+        ERROR_SCREEN.show_menu()
 
 pygame.quit()
