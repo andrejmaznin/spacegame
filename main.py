@@ -226,7 +226,25 @@ def generate_map(filename):
                         x1, y1 = random.randint(4, 45), random.randint(4, 45)
 
             a[23][23] = "@"
-            a[22][22] = "A"
+
+            # генерация астероидов
+            for belts_num in range(randint(0, 2)):
+                x1, y1 = randint(0, 45), randint(0, 45)
+                x2, y2 = randint(0, 45), randint(0, 45)
+                for x in range(46):
+                    for y in range(46):
+                        ok = True
+                        if (y1 - y2) * x + (x2 - x1) * y + (x1 * y2 - x2 * y1) == 0 or ((y1 + 1) - y2) * x + (
+                                x2 - x1) * y + (x1 * y2 - x2 * (y1 + 1)) == 0 or (y1 - y2) * x + ((x2 + 1) - x1) * y + (
+                                x1 * y2 - (x2 + 1) * (y1 + 1)) == 0:
+                            # проверка наличия планет или звезды рядом:
+                            for i in range(max(x - 4, 0), min(x + 4, 46)):
+                                for j in range(max(y - 4, 0), min(y + 4, 46)):
+                                    if a[i][j] == "S" or a[i][j] == "0" or a[i][j] == "1" or a[i][j] == "2":
+                                        ok = False
+                            if ok:
+                                a[x][y] = "A"
+
             a = "".join(["".join(i) + "\n" for i in a])
             mapFile.write(a)
 
@@ -348,6 +366,11 @@ def return_to_main_menu():
 def show_star_system_map():
     global _cycle_
     _cycle_ = "Star System Map"
+
+
+def show_sport_menu():
+    global _cycle_
+    _cycle_ = "Sport Menu"
 
 
 def continue_game():
@@ -527,8 +550,10 @@ class Status:
                           (width - 20 - NUM_FONT.render(str(known) + "/" + str(len(planets.keys())))[0].get_size()[0],
                            20)],
             "restart": [STATUS_FONT.render("", (0, 0, 0))[0], (0, 0)],
-            "explored": [BIG_FONT.render(["EXPLORED", "ИССЛЕДОВАНО"][index_language()], fgcolor=pygame.Color("blue"))[0],
-                         (width // 2 - BIG_FONT.render(["EXPLORED", "ИССЛЕДОВАНО"][index_language()])[0].get_size()[0] // 2, 120)]}
+            "explored": [
+                BIG_FONT.render(["EXPLORED", "ИССЛЕДОВАНО"][index_language()], fgcolor=pygame.Color("blue"))[0],
+                (width // 2 - BIG_FONT.render(["EXPLORED", "ИССЛЕДОВАНО"][index_language()])[0].get_size()[0] // 2,
+                 120)]}
 
     def update(self, text):
         global known
@@ -540,8 +565,9 @@ class Status:
                     known += 1
                     planets[f"{x}, {y}"][1] = "known"
 
-                self.to_blit["success"] = [STATUS_FONT.render(("SUCCESS", "УСПЕШНО")[index_language()], fgcolor=pygame.Color("red"))[0],
-                                           (width // 2 - self.to_blit["success"][0].get_size()[0] // 2, 200)]
+                self.to_blit["success"] = [
+                    STATUS_FONT.render(("SUCCESS", "УСПЕШНО")[index_language()], fgcolor=pygame.Color("red"))[0],
+                    (width // 2 - self.to_blit["success"][0].get_size()[0] // 2, 200)]
                 self.to_blit["num_known"] = [
                     NUM_FONT.render(str(known) + "/" + str(len(planets.keys())), fgcolor=pygame.Color("red"))[0],
                     (width - 20 - NUM_FONT.render(str(known) + "/" + str(len(planets.keys())))[0].get_size()[0], 20)]
@@ -816,10 +842,11 @@ class Menu:
 
 class SettingsMenu(Menu):
     def __init__(self, screen, cycle_name='Settings',
-                 buttons=[[100, 100, ('VOLUME', 'ГРОМКОСТЬ'), (255, 0, 0), (255, 0, 255), (decrease_vol, increase_vol),
-                           get_volume],
-                          [100, 200, ('LANGUAGE', 'ЯЗЫК'), (255, 0, 0), (255, 0, 255),
-                           (previous_language, next_language), get_language]],
+                 buttons=[
+                     [100, 100, ('VOLUME', 'ГРОМКОСТЬ'), (150, 0, 150), (255, 0, 255), (decrease_vol, increase_vol),
+                      get_volume],
+                     [100, 200, ('LANGUAGE', 'ЯЗЫК'), (150, 0, 150), (255, 0, 255),
+                      (previous_language, next_language), get_language]],
                  k_escape_fun=set_pause):
         super().__init__(screen, cycle_name, buttons, k_escape_fun)
 
@@ -835,24 +862,19 @@ class SettingsMenu(Menu):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
-                if event.type == pygame.KEYUP:
+                elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_ESCAPE:
                         save_settings()
-                        function = self.k_escape
-                        function()
+                        self.k_escape()
                         break
-                if event.type == pygame.MOUSEBUTTONUP:
+                elif event.type == pygame.MOUSEBUTTONUP:
                     if return_btn:
-                        function = self.k_escape
+                        self.k_escape()
                         save_settings()
-                        function()
                     if side == 1:
-                        function = self.buttons[btn_num][5][0]
-                        function()
+                        self.buttons[btn_num][5][0]()
                     if side == 2:
-                        function = self.buttons[btn_num][5][1]
-                        print(function)
-                        function()
+                        self.buttons[btn_num][5][1]()
 
             pygame.display.flip()
 
@@ -877,10 +899,10 @@ class SettingsMenu(Menu):
         else:
             self.screen.blit(self.font.render(self.buttons[btn_num][2][lang], self.buttons[btn_num][3])[0],
                              (self.buttons[btn_num][0], self.buttons[btn_num][1]))
-            self.draw_pointer((255, 0, 0), x - 120, self.buttons[btn_num][1] + 50, 1)
+            self.draw_pointer((150, 0, 150), x - 120, self.buttons[btn_num][1] + 50, 1)
             self.screen.blit(self.font.render(str(self.buttons[btn_num][6]()), self.buttons[btn_num][3])[0],
                              (x - dx - 110, self.buttons[btn_num][1] + 10))
-            self.draw_pointer((255, 0, 0), x - 140 - dx, self.buttons[btn_num][1] + 50, 2)
+            self.draw_pointer((150, 0, 150), x - 140 - dx, self.buttons[btn_num][1] + 50, 2)
 
     def check_button(self):
         x, y = pygame.display.get_window_size()
@@ -1134,8 +1156,9 @@ for i in range(3):
 START_MENU = Menu(screen, 'Start Menu',
                   buttons=[[100, 100, ('USE DEFAULT MAPS', 'ПРОДОЛЖИТЬ ИГРУ'), (255, 0, 0), (0, 0, 255), start_game],
                            [100, 170, ('GENERATE MAPS', 'НОВАЯ ИГРА'), (255, 0, 0), (0, 0, 255), ask_restart],
-                           [100, 240, ('SETTINGS', 'НАСТРОЙКИ'), (255, 0, 0), (0, 0, 255), show_settings],
-                           [100, 310, ('EXIT', 'ВЫХОД'), (255, 0, 0), (0, 0, 255), sys.exit]])
+                           [100, 240, ('SPORT MODE', 'СПОРТИВНЫЙ РЕЖИМ'), (255, 0, 0), (0, 0, 255), show_sport_menu],
+                           [100, 310, ('SETTINGS', 'НАСТРОЙКИ'), (255, 0, 0), (0, 0, 255), show_settings],
+                           [100, 380, ('EXIT', 'ВЫХОД'), (255, 0, 0), (0, 0, 255), sys.exit]])
 
 PAUSE_MENU = Menu(screen, "Pause",
                   buttons=[[100, 100, ("CONTINUE", "ПРОДОЛЖИТЬ"), (0, 100, 0), (0, 0, 255), continue_game],
@@ -1144,7 +1167,15 @@ PAUSE_MENU = Menu(screen, "Pause",
                             show_star_system_map],
                            [100, 310, ("SETTINGS", "НАСТРОЙКИ"), (255, 0, 0), (0, 0, 255), show_settings]],
                   k_escape_fun=continue_game)
+
+SPORT_MENU = Menu(screen, "Sport Menu",
+                  buttons=[[100, 100, ("PLAY", "ИГРАТЬ"), (0, 255, 0), (0, 0, 255), do_nothing],
+                           [100, 170, ("SCORE TABLE", "ТАБЛИЦА РЕКОРДОВ"), (0, 255, 0,), (0, 0, 255), do_nothing],
+                           [100, 240, ("MAIN MENU", "ГЛАВНОЕ МЕНЮ"), (100, 0, 0), (0, 0, 255), return_to_main_menu]],
+                  k_escape_fun=return_to_main_menu)
+
 STAR_MAP = StarSystemMap(screen, 'Star System Map', k_escape_fun=do_nothing)
+
 ERROR_SCREEN = Menu(screen, _cycle_,
                     buttons=[[100, 100, ('UNEXPECTED ERROR', 'НЕИЗВЕСТНАЯ ОШИБКА'), (255, 255, 255), (255, 255, 255),
                               do_nothing],
@@ -1153,6 +1184,7 @@ ERROR_SCREEN = Menu(screen, _cycle_,
 SETTINGS_MENU = SettingsMenu(screen)
 START_MENU.generate_sky()
 PAUSE_MENU.generate_sky()
+SPORT_MENU.generate_sky()
 
 while running:
     if _cycle_ == "Start Menu":
@@ -1198,8 +1230,8 @@ while running:
         if show_text:
             screen.blit(messages[0].surface, (400, 400))
         if len(systems.keys()) == list(systems.values()).count(True):
-            txt = BIG_FONT.render("TOTAL TIME", fgcolor=pygame.Color("red"))[0]
-            time_final = BIG_FONT.render(str(a), fgcolor=pygame.Color("red"))[0]
+            txt = BIG_FONT.render(("TOTAL TIME", "ОБЩЕЕ ВРЕМЯ")[index_language()], fgcolor=pygame.Color("red"))[0]
+            time_final = BIG_FONT.render(str(round(a, 2)), fgcolor=pygame.Color("red"))[0]
             screen.blit(txt, (width // 2 - txt.get_size()[0] // 2, 50))
             screen.blit(time_final, (width // 2 - time_final.get_size()[0] // 2, 90))
         else:
@@ -1209,7 +1241,7 @@ while running:
                     final = round(end - start + (t1 - t), 2)
                     a += final
                     systems[cur_system] = True
-                time_final = NUM_FONT.render(str(final), fgcolor=pygame.Color("red"))[0]
+                time_final = NUM_FONT.render(str(round(final, 2)), fgcolor=pygame.Color("red"))[0]
                 screen.blit(time_final, (width // 2 - time_final.get_size()[0] // 2, 50))
                 printed_time = True
 
@@ -1229,6 +1261,9 @@ while running:
 
     elif _cycle_ == "Settings":
         SETTINGS_MENU.show_menu()
+
+    elif _cycle_ == "Sport Menu":
+        SPORT_MENU.show_menu()
 
     else:
         ERROR_SCREEN.show_menu()
